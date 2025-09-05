@@ -1,0 +1,67 @@
+# Dependencies
+node_modules
+/.pnp
+.pnp.js
+
+# Build output
+dist
+/out
+/build
+/release
+*.exe
+*.dmg
+*.app
+*.msi
+*.deb
+*.rpm
+*.snap
+
+# Logs
+/logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor and IDE files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Electron-specific
+electron-builder.yml
+electron-out/
+*.asar
+*.asar.unpacked
+
+# Testing
+/coverage
+/test-results
+/playwright-report
+/playwright/.cache
+
+# Miscellaneous
+*.bak
+*.tmp
+*.temp
+
+*.png
+*.jpg
+files.json

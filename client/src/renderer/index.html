@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My Drive</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="bg-gray-100 p-4">
+    <h1 class="text-2xl font-bold mb-4">My Drive</h1>
+
+    <div id="controls" class="flex flex-wrap items-center mb-4 gap-2">
+      <button
+        id="sortButton"
+        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+      >
+        Sort by Modified
+      </button>
+      <select
+        id="filterSelect"
+        class="bg-white border border-gray-300 px-4 py-2 rounded"
+      >
+        <option value="all">All Files</option>
+        <option value=".java">.java Files</option>
+        <option value=".png">.png Files</option>
+      </select>
+      <button
+        id="refreshButton"
+        class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+      >
+        Refresh
+      </button>
+    </div>
+
+    <form id="uploadForm" class="bg-white p-4 rounded-lg shadow-md mb-4">
+      <label
+        class="relative w-64 cursor-pointer bg-white border border-gray-300 px-3 py-2 rounded inline-block"
+      >
+        <span id="fileName" class="text-gray-700">No file chosen</span>
+        <input
+          type="file"
+          name="file"
+          class="absolute left-0 top-0 w-full h-full opacity-0 cursor-pointer"
+        />
+      </label>
+      <button
+        type="submit"
+        class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600 ml-2"
+      >
+        Upload File
+      </button>
+    </form>
+
+    <div id="app"></div>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>
