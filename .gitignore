@@ -1,67 +1,56 @@
-# Dependencies
-node_modules
-/.pnp
-.pnp.js
-
-# Build output
-dist
-/out
+# compiled output
+/dist
+/node_modules
 /build
-/release
-*.exe
-*.dmg
-*.app
-*.msi
-*.deb
-*.rpm
-*.snap
 
 # Logs
-/logs
+logs
 *.log
 npm-debug.log*
+pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
-# Environment variables
+# OS
+.DS_Store
+
+# Tests
+/coverage
+/.nyc_output
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# dotenv environment variable files
 .env
-.env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.local
 
-# Editor and IDE files
-.idea/
-.vscode/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.swp
-*.sublime-project
-*.sublime-workspace
+# temp directory
+.temp
+.tmp
 
-# OS generated files
-.DS_Store
-Thumbs.db
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# Electron-specific
-electron-builder.yml
-electron-out/
-*.asar
-*.asar.unpacked
-
-# Testing
-/coverage
-/test-results
-/playwright-report
-/playwright/.cache
-
-# Miscellaneous
-*.bak
-*.tmp
-*.temp
-
-*.png
-*.jpg
-files.json
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
