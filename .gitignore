@@ -1,7 +1,7 @@
 # compiled output
-/dist
+**/dist
+**/build
 node_modules
-/build
 
 # Logs
 logs
@@ -16,35 +16,35 @@ lerna-debug.log*
 .DS_Store
 
 # Tests
-/coverage
-/.nyc_output
+**/coverage
+**/.nyc_output
 
 # IDEs and editors
-/.idea
-.project
-.classpath
-.c9/
+**/.idea
+**/.project
+**/.classpath
+**/.c9/
 *.launch
-.settings/
+**/.settings/
 *.sublime-workspace
 
 # IDE - VSCode
-.vscode/*
+**/.vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
 
 # dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+**/.env
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+**/.env.local
 
 # temp directory
-.temp
-.tmp
+**/.temp
+**/.tmp
 
 # Runtime data
 pids
