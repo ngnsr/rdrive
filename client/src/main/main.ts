@@ -10,16 +10,9 @@ const envPath = path.resolve(__dirname, "../.env");
 const result = config({ path: envPath });
 if (result.error) {
   console.error("Failed to load .env file:", result.error);
-} else {
-  console.log("Environment variables loaded from .env:", {
-    COGNITO_USER_POOL_ID: !!process.env.COGNITO_USER_POOL_ID,
-    COGNITO_CLIENT_ID: !!process.env.COGNITO_CLIENT_ID,
-    AWS_REGION: process.env.AWS_REGION,
-  });
 }
 
 ipcMain.handle("get-env-vars", async () => {
-  console.log("IPC: Sending env vars to preload");
   return {
     COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID,
     COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID,

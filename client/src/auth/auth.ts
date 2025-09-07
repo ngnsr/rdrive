@@ -20,7 +20,6 @@ export async function register(email: string, password: string, name: string) {
         },
       },
     });
-    console.log("Signup successful", result);
     alert("Signup successful! Check your email for confirmation code.");
     return result;
   } catch (err) {
@@ -37,7 +36,6 @@ export async function confirm(email: string, code: string) {
       username: email,
       confirmationCode: code,
     });
-    console.log("Confirmation successful", result);
     alert("Your account is confirmed! You can now log in.");
     return result;
   } catch (err) {
@@ -49,15 +47,7 @@ export async function confirm(email: string, code: string) {
 
 // Sign in
 export async function login(email: string, password: string) {
-  console.log("here");
   const result = await signIn({ username: email, password });
-
-  if (result.isSignedIn) {
-    console.log("User signed in successfully");
-  } else {
-    console.log("Next step required:", result.nextStep);
-  }
-
   return result;
 }
 

@@ -23,5 +23,4 @@ export function configureAmplify(env: NodeJS.ProcessEnv) {
   };
 
   Amplify.configure({ Auth: authConfig });
-  console.log("Amplify configured successfully");
 }

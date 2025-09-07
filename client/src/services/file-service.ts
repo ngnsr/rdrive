@@ -20,10 +20,6 @@ class FileService {
   private sortAscending = true;
   private filterType = "all";
 
-  constructor() {
-    // this.fetchFiles();
-  }
-
   async fetchFiles(): Promise<void> {
     try {
       const response = await axios.get("http://localhost:3000/files");
@@ -63,7 +59,6 @@ class FileService {
   }
 
   async uploadFile(file: File): Promise<void> {
-    console.log("FileService.uploadFile called:", file.name);
     const formData = new FormData();
     formData.append("file", file);
 
@@ -76,7 +71,7 @@ class FileService {
         }
       );
       alert(response.data.message);
-      // await this.fetchFiles(); // Refresh after upload
+      await this.fetchFiles(); // Refresh after upload
     } catch (error) {
       console.error("Upload failed:", error);
       alert("Upload failed. Check the console for details.");
@@ -84,28 +79,24 @@ class FileService {
   }
 
   async deleteFile(fileToDelete: FileItem): Promise<void> {
-    console.log(1);
     const serverFile = this.currentFiles.find(
       (file) => file.name === fileToDelete.name
     );
-    console.log(1);
     if (
       serverFile &&
       window.confirm(`Are you sure you want to delete ${serverFile.name}?`)
     ) {
-      console.log(1);
       try {
         const response = await axios.delete(
           `http://localhost:3000/delete/${serverFile.name}`
         );
         alert(response.data.message);
-        // await this.fetchFiles(); // Refresh after deletion
+        await this.fetchFiles(); // Refresh after deletion
       } catch (error) {
         console.error("Delete failed:", error);
         alert("Delete failed. Check the console for details.");
       }
     }
-    console.log("why");
   }
 }
 

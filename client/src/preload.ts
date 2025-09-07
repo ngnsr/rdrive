@@ -3,9 +3,6 @@ import { register, login, logout, getUser, confirm } from "./auth/auth";
 import "./auth/amplify-config";
 import { configureAmplify } from "./auth/amplify-config";
 
-// Debug log to confirm preload script execution
-console.log("Preload script loaded");
-
 // Define types for exposed APIs
 interface ElectronAPI {
   uploadFile: (filePath: string) => Promise<any>;
@@ -26,7 +23,6 @@ async function initialize() {
   try {
     // Load environment variables via IPC
     const env = await ipcRenderer.invoke("get-env-vars");
-    console.log("Preload: Environment variables received:", env);
 
     // Set process.env for Amplify configuration
     process.env.COGNITO_USER_POOL_ID = env.COGNITO_USER_POOL_ID;
@@ -48,7 +44,6 @@ async function initialize() {
       register: async (email: string, password: string, name: string) => {
         try {
           const result = await register(email, password, name);
-          console.log("Preload: Register successful");
           return result;
         } catch (err) {
           console.error("Preload: Register error:", err);
@@ -58,7 +53,6 @@ async function initialize() {
       login: async (email: string, password: string) => {
         try {
           const result = await login(email, password);
-          console.log("Preload: Login successful");
           return result;
         } catch (err) {
           console.error("Preload: Login error:", err);
@@ -68,7 +62,6 @@ async function initialize() {
       logout: async () => {
         try {
           await logout();
-          console.log("Preload: Logout successful");
         } catch (err) {
           console.error("Preload: Logout error:", err);
           throw err;
@@ -77,7 +70,6 @@ async function initialize() {
       getUser: async () => {
         try {
           const user = await getUser();
-          console.log("Preload: Get user successful:", user);
           return user;
         } catch (err) {
           console.error("Preload: Get user error:", err);
@@ -87,7 +79,6 @@ async function initialize() {
       confirm: async (email: string, code: string) => {
         try {
           const result = await confirm(email, code);
-          console.log("Preload: Confirmation successful:", result);
           return result;
         } catch (err) {
           console.error("Preload: Confirmation error:", err);
@@ -104,8 +95,6 @@ async function initialize() {
         ipcRenderer.invoke("delete-file", fileName),
       fetchFiles: () => ipcRenderer.invoke("fetch-files"),
     } as ElectronAPI);
-
-    console.log("Preload: APIs exposed successfully");
   } catch (err) {
     console.error("Preload initialization failed:", err);
     throw err;
