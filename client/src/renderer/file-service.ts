@@ -21,7 +21,7 @@ class FileService {
   private filterType = "all";
 
   constructor() {
-    this.fetchFiles();
+    // this.fetchFiles();
   }
 
   async fetchFiles(): Promise<void> {
@@ -76,7 +76,7 @@ class FileService {
         }
       );
       alert(response.data.message);
-      await this.fetchFiles(); // Refresh after upload
+      // await this.fetchFiles(); // Refresh after upload
     } catch (error) {
       console.error("Upload failed:", error);
       alert("Upload failed. Check the console for details.");
@@ -99,7 +99,7 @@ class FileService {
           `http://localhost:3000/delete/${serverFile.name}`
         );
         alert(response.data.message);
-        await this.fetchFiles(); // Refresh after deletion
+        // await this.fetchFiles(); // Refresh after deletion
       } catch (error) {
         console.error("Delete failed:", error);
         alert("Delete failed. Check the console for details.");

@@ -1,6 +1,7 @@
 const path = require("path");
 const { merge } = require("webpack-merge");
 const common = require("./webpack.common.js");
+const Dotenv = require("dotenv-webpack");
 
 module.exports = merge(common, {
   target: "electron-main",
@@ -13,4 +14,10 @@ module.exports = merge(common, {
     __dirname: false,
     __filename: false,
   },
+  plugins: [
+    new Dotenv({
+      path: "./.env",
+      systemvars: true,
+    }),
+  ],
 });

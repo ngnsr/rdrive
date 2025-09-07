@@ -16,7 +16,10 @@
   "type": "commonjs",
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.13",
+    "aws-amplify": "^6.15.5",
     "axios": "^1.11.0",
+    "dotenv": "^17.2.2",
+    "dotenv-webpack": "^8.1.1",
     "electron": "^38.0.0",
     "postcss-loader": "^8.2.0"
   },
