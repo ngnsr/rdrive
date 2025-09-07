@@ -1,10 +1,12 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import * as path from "path";
 import { config } from "dotenv";
+import fs from "fs";
+const FILES_DIR = path.join(process.cwd(), "files");
 
 let mainWindow: BrowserWindow | null = null;
 
-const envPath = path.resolve(__dirname, ".env");
+const envPath = path.resolve(__dirname, "../.env");
 const result = config({ path: envPath });
 if (result.error) {
   console.error("Failed to load .env file:", result.error);
@@ -23,6 +25,54 @@ ipcMain.handle("get-env-vars", async () => {
     COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID,
     AWS_REGION: process.env.AWS_REGION,
   };
+});
+
+// Fetch files
+ipcMain.handle("fetch-files", async () => {
+  try {
+    const files = fs.readdirSync(FILES_DIR);
+    return files.map((file) => {
+      const stats = fs.statSync(path.join(FILES_DIR, file));
+      return {
+        name: file,
+        size: stats.size,
+        createdAt: stats.birthtime,
+        modifiedAt: stats.mtime,
+      };
+    });
+  } catch (err) {
+    console.error("Failed to fetch files:", err);
+    throw err;
+  }
+});
+
+// Upload file
+ipcMain.handle("upload-file", async (_, filePath: string) => {
+  try {
+    const fileName = path.basename(filePath);
+    const dest = path.join(FILES_DIR, fileName);
+    fs.copyFileSync(filePath, dest);
+    return { success: true, name: fileName };
+  } catch (err) {
+    console.error("Failed to upload file:", err);
+    throw err;
+  }
+});
+
+// Delete file
+ipcMain.handle("delete-file", async (_, fileName: string) => {
+  try {
+    const filePath = path.join(FILES_DIR, fileName);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      return { success: true };
+    } else {
+      throw new Error("File does not exist");
+    }
+  } catch (err) {
+    console.error("Failed to delete file:", err);
+    throw err;
+  }
 });
 
 function createWindow() {

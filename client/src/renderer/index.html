@@ -16,6 +16,16 @@
   <body class="bg-gray-100 p-4">
     <h1 class="text-2xl font-bold mb-4">My Drive</h1>
 
+    <div id="userInfo" class="mb-4 text-gray-700 font-medium hidden">
+      Logged in as: <span id="userEmail"></span>
+      <button
+        id="logoutBtn"
+        class="ml-4 bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+      >
+        Logout
+      </button>
+    </div>
+
     <div id="authContainer" class="mb-4">
       <h2 class="text-xl font-bold mb-2">Sign In</h2>
       <form id="loginForm" class="flex flex-col gap-2">
