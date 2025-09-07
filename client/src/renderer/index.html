@@ -2,44 +2,35 @@
 <html>
   <head>
     <title>My Drive</title>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+      default-src 'self';
+      script-src 'self';
+      style-src 'self' 'unsafe-inline';
+      connect-src 'self' https://cognito-idp.eu-north-1.amazonaws.com https://*.amazoncognito.com;
+    "
+    />
+    <link rel="stylesheet" href="styles.css" />
   </head>
-  <meta
-    http-equiv="Content-Security-Policy"
-    content="
-    default-src 'self';
-    script-src 'self';
-    style-src 'self' 'unsafe-inline';
-    connect-src 'self' https://cognito-idp.eu-north-1.amazonaws.com https://*.amazoncognito.com;
-  "
-  />
-
   <body class="bg-gray-100 p-4">
     <h1 class="text-2xl font-bold mb-4">My Drive</h1>
 
-    <div id="userInfo" class="mb-4 text-gray-700 font-medium hidden">
-      Logged in as: <span id="userEmail"></span>
-      <button
-        id="logoutBtn"
-        class="ml-4 bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-      >
-        Logout
-      </button>
-    </div>
-
+    <!-- Auth forms -->
     <div id="authContainer" class="mb-4">
       <h2 class="text-xl font-bold mb-2">Sign In</h2>
+
+      <!-- Login Form -->
       <form id="loginForm" class="flex flex-col gap-2">
         <input
           id="loginEmail"
           type="email"
-          name="email"
           placeholder="Email"
           class="border px-3 py-2 rounded"
         />
         <input
           id="loginPassword"
           type="password"
-          name="password"
           placeholder="Password"
           class="border px-3 py-2 rounded"
         />
@@ -54,25 +45,23 @@
         </button>
       </form>
 
+      <!-- Signup Form -->
       <form id="signupForm" class="hidden flex flex-col gap-2">
         <input
           id="signupName"
           type="text"
-          name="name"
           placeholder="Name"
           class="border px-3 py-2 rounded"
         />
         <input
           id="signupEmail"
           type="email"
-          name="email"
           placeholder="Email"
           class="border px-3 py-2 rounded"
         />
         <input
           id="signupPassword"
           type="password"
-          name="password"
           placeholder="Password"
           class="border px-3 py-2 rounded"
         />
@@ -87,18 +76,17 @@
         </button>
       </form>
 
+      <!-- Confirm Form -->
       <form id="confirmForm" class="hidden flex flex-col gap-2">
         <input
           id="confirmEmail"
           type="email"
-          name="email"
           placeholder="Email"
           class="border px-3 py-2 rounded"
         />
         <input
           id="confirmCode"
           type="text"
-          name="code"
           placeholder="Confirmation Code"
           class="border px-3 py-2 rounded"
         />
@@ -118,49 +106,68 @@
       </form>
     </div>
 
-    <div id="controls" class="flex flex-wrap items-center mb-4 gap-2">
-      <button
-        id="sortButton"
-        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+    <!-- Authorized content -->
+    <div id="appContainer" class="hidden">
+      <!-- User info -->
+      <div id="userInfo" class="mb-4 text-gray-700 font-medium hidden">
+        Logged in as: <span id="userEmail"></span>
+        <button
+          id="logoutBtn"
+          class="ml-4 bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+        >
+          Logout
+        </button>
+      </div>
+
+      <!-- Controls -->
+      <div id="controls" class="flex flex-wrap items-center mb-4 gap-2 hidden">
+        <button
+          id="sortButton"
+          class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Sort by Modified
+        </button>
+        <select
+          id="filterSelect"
+          class="bg-white border border-gray-300 px-4 py-2 rounded"
+        >
+          <option value="all">All Files</option>
+          <option value=".java">.java Files</option>
+          <option value=".png">.png Files</option>
+        </select>
+        <button
+          id="refreshButton"
+          class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+        >
+          Refresh
+        </button>
+      </div>
+
+      <!-- Upload Form -->
+      <form
+        id="uploadForm"
+        class="bg-white p-4 rounded-lg shadow-md mb-4 hidden"
       >
-        Sort by Modified
-      </button>
-      <select
-        id="filterSelect"
-        class="bg-white border border-gray-300 px-4 py-2 rounded"
-      >
-        <option value="all">All Files</option>
-        <option value=".java">.java Files</option>
-        <option value=".png">.png Files</option>
-      </select>
-      <button
-        id="refreshButton"
-        class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-      >
-        Refresh
-      </button>
+        <label
+          class="relative w-64 cursor-pointer bg-white border border-gray-300 px-3 py-2 rounded inline-block"
+        >
+          <span id="fileName" class="text-gray-700">No file chosen</span>
+          <input
+            type="file"
+            name="file"
+            class="absolute left-0 top-0 w-full h-full opacity-0 cursor-pointer"
+          />
+        </label>
+        <button
+          type="submit"
+          class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600 ml-2"
+        >
+          Upload File
+        </button>
+      </form>
+
+      <div id="app"></div>
     </div>
-
-    <form id="uploadForm" class="bg-white p-4 rounded-lg shadow-md mb-4">
-      <label
-        class="relative w-64 cursor-pointer bg-white border border-gray-300 px-3 py-2 rounded inline-block"
-      >
-        <span id="fileName" class="text-gray-700">No file chosen</span>
-        <input
-          type="file"
-          name="file"
-          class="absolute left-0 top-0 w-full h-full opacity-0 cursor-pointer"
-        />
-      </label>
-      <button
-        type="submit"
-        class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600 ml-2"
-      >
-        Upload File
-      </button>
-    </form>
-
-    <div id="app"></div>
 
     <script src="renderer.js"></script>
   </body>
