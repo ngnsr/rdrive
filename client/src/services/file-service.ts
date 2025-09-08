@@ -1,9 +1,11 @@
 import axios from "axios";
+import { fetchFilesAndRenderTable } from "../utils/render-table";
 
 export type FileItem = {
   name: string;
-  createdAt: Date;
-  modifiedAt: Date;
+  size: number;
+  createdAt: string;
+  modifiedAt: string;
   owner: string;
   editor: string;
 };
@@ -12,7 +14,7 @@ type ServerFile = {
   name: string;
   filename: string;
   uploadedAt: string;
-  mtime: Date;
+  mtime: string;
 };
 
 class FileService {
@@ -21,6 +23,8 @@ class FileService {
   private filterType = "all";
 
   async fetchFiles(): Promise<void> {
+    throw new Error("Not implemented");
+    // return;
     try {
       const response = await axios.get("http://localhost:3000/files");
       this.currentFiles = response.data.map((file: ServerFile) => ({
@@ -45,35 +49,49 @@ class FileService {
     );
   }
 
-  sortByModified(): void {
-    this.currentFiles.sort((a, b) => {
-      return this.sortAscending
-        ? a.modifiedAt.getTime() - b.modifiedAt.getTime()
-        : b.modifiedAt.getTime() - a.modifiedAt.getTime();
-    });
-    this.sortAscending = !this.sortAscending;
-  }
+  // sortByModified(): void {
+  //   this.currentFiles.sort((a, b) => {
+  //     return this.sortAscending
+  //       ? a.modifiedAt.getTime() - b.modifiedAt.getTime()
+  //       : b.modifiedAt.getTime() - a.modifiedAt.getTime();
+  //   });
+  //   this.sortAscending = !this.sortAscending;
+  // }
 
   setFilterType(type: string): void {
     this.filterType = type;
   }
 
-  async uploadFile(file: File): Promise<void> {
-    const formData = new FormData();
-    formData.append("file", file);
-
+  async uploadFile(file: File, ownerId: string): Promise<void> {
     try {
+      // Step 1: Request presigned URL
       const response = await axios.post(
-        "http://localhost:3000/upload",
-        formData,
+        "http://localhost:3000/files/upload-url",
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          fileName: file.name,
+          ownerId,
+          size: file.size,
+          mimeType: file.type,
         }
       );
-      alert(response.data.message);
-      await this.fetchFiles(); // Refresh after upload
-    } catch (error) {
-      console.error("Upload failed:", error);
+
+      const { uploadUrl, fileId } = response.data;
+
+      // Upload file directly to S3
+      await axios.put(uploadUrl, file, {
+        headers: { "Content-Type": file.type },
+      });
+
+      // Notify backend upload completed
+      await axios.post("http://localhost:3000/files/mark-uploaded", {
+        ownerId,
+        fileId,
+      });
+
+      alert("File uploaded successfully!");
+      await fetchFilesAndRenderTable({ loginId: ownerId }); // Refresh after upload
+    } catch (err) {
+      console.error("Upload failed:", err);
       alert("Upload failed. Check the console for details.");
     }
   }
@@ -88,10 +106,10 @@ class FileService {
     ) {
       try {
         const response = await axios.delete(
-          `http://localhost:3000/delete/${serverFile.name}`
+          `http://localhost:3000/files/delete/${serverFile.name}`
         );
         alert(response.data.message);
-        await this.fetchFiles(); // Refresh after deletion
+        await this.fetchFiles(); // todo: fix
       } catch (error) {
         console.error("Delete failed:", error);
         alert("Delete failed. Check the console for details.");

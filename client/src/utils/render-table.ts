@@ -1,3 +1,5 @@
+import fileService from "../services/file-service";
+
 interface FileItem {
   name: string;
   size: number;
@@ -10,7 +12,9 @@ interface FileItem {
 // Reference the app container once
 const appContainer = document.getElementById("app");
 
-export async function renderTable(currentUser: { loginId: string } | null) {
+export async function fetchFilesAndRenderTable(
+  currentUser: { loginId: string } | null
+) {
   if (!appContainer) return;
 
   // --- Guard: unauthorized users ---
@@ -25,7 +29,8 @@ export async function renderTable(currentUser: { loginId: string } | null) {
 
   let files: FileItem[] = [];
   try {
-    files = await window.electronAPI.fetchFiles();
+    await fileService.fetchFiles();
+    files = fileService.getFiles();
   } catch (err) {
     console.error("Failed to fetch files:", err);
     appContainer.innerHTML = `
@@ -86,22 +91,22 @@ export async function renderTable(currentUser: { loginId: string } | null) {
   table.appendChild(tbody);
   appContainer.appendChild(table);
 
-  tbody.querySelectorAll(".delete-btn").forEach((btn) => {
-    btn.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      const fileName = (btn as HTMLElement).getAttribute("data-filename");
-      if (!fileName) return;
+  // tbody.querySelectorAll(".delete-btn").forEach((btn) => {
+  //   btn.addEventListener("click", async (e) => {
+  //     e.stopPropagation();
+  //     const fileName = (btn as HTMLElement).getAttribute("data-filename");
+  //     if (!fileName) return;
 
-      if (confirm(`Delete file "${fileName}"?`)) {
-        try {
-          await window.electronAPI.deleteFile(fileName);
-          await renderTable(currentUser);
-        } catch (err) {
-          console.error("Delete file error:", err);
-        }
-      }
-    });
-  });
+  //     if (confirm(`Delete file "${fileName}"?`)) {
+  //       try {
+  //         fileService.deleteFile(fileName);
+  //         await fetchFilesAndRenderTable(currentUser);
+  //       } catch (err) {
+  //         console.error("Delete file error:", err);
+  //       }
+  //     }
+  //   });
+  // });
 }
 
 function formatSize(bytes: number): string {

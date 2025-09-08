@@ -11,9 +11,18 @@ import { HealthModule } from './health/health.module';
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: Joi.object({
-        AWS_REGION: Joi.string().required(),
-        S3_BUCKET: Joi.string().required(),
+        AWS_ACCESS_KEY_ID: Joi.string().required(),
+        AWS_SECRET_ACCESS_KEY: Joi.string().required(),
+
+        COGNITO_USER_POOL_ID: Joi.string().required(),
+        COGNITO_CLIENT_ID: Joi.string().required(),
+        AWS_REGION_COGNITO: Joi.string().required(),
+
         DYNAMO_TABLE: Joi.string().required(),
+        AWS_REGION_DYNAMO: Joi.string().required(),
+
+        S3_BUCKET_NAME: Joi.string().required(),
+        AWS_REGION_S3: Joi.string().required(),
       }),
     }),
     AwsModule,

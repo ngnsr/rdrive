@@ -21,52 +21,13 @@ ipcMain.handle("get-env-vars", async () => {
 });
 
 // Fetch files
-ipcMain.handle("fetch-files", async () => {
-  try {
-    const files = fs.readdirSync(FILES_DIR);
-    return files.map((file) => {
-      const stats = fs.statSync(path.join(FILES_DIR, file));
-      return {
-        name: file,
-        size: stats.size,
-        createdAt: stats.birthtime,
-        modifiedAt: stats.mtime,
-      };
-    });
-  } catch (err) {
-    console.error("Failed to fetch files:", err);
-    throw err;
-  }
-});
+// ipcMain.handle("fetch-files", async () => {});
 
 // Upload file
-ipcMain.handle("upload-file", async (_, filePath: string) => {
-  try {
-    const fileName = path.basename(filePath);
-    const dest = path.join(FILES_DIR, fileName);
-    fs.copyFileSync(filePath, dest);
-    return { success: true, name: fileName };
-  } catch (err) {
-    console.error("Failed to upload file:", err);
-    throw err;
-  }
-});
+// ipcMain.handle("upload-file", async (_, filePath: string) => {});
 
 // Delete file
-ipcMain.handle("delete-file", async (_, fileName: string) => {
-  try {
-    const filePath = path.join(FILES_DIR, fileName);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      return { success: true };
-    } else {
-      throw new Error("File does not exist");
-    }
-  } catch (err) {
-    console.error("Failed to delete file:", err);
-    throw err;
-  }
-});
+// ipcMain.handle("delete-file", async (_, fileName: string) => {});
 
 function createWindow() {
   mainWindow = new BrowserWindow({

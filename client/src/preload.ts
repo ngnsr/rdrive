@@ -3,13 +3,6 @@ import { register, login, logout, getUser, confirm } from "./auth/auth";
 import "./auth/amplify-config";
 import { configureAmplify } from "./auth/amplify-config";
 
-// Define types for exposed APIs
-interface ElectronAPI {
-  uploadFile: (filePath: string) => Promise<any>;
-  deleteFile: (fileName: string) => Promise<any>;
-  fetchFiles: () => Promise<any>;
-}
-
 interface AuthAPI {
   register: (email: string, password: string, name: string) => Promise<any>;
   login: (email: string, password: string) => Promise<any>;
@@ -88,13 +81,13 @@ async function initialize() {
     } as AuthAPI);
 
     // Expose file-related APIs
-    contextBridge.exposeInMainWorld("electronAPI", {
-      uploadFile: (filePath: string) =>
-        ipcRenderer.invoke("upload-file", filePath),
-      deleteFile: (fileName: string) =>
-        ipcRenderer.invoke("delete-file", fileName),
-      fetchFiles: () => ipcRenderer.invoke("fetch-files"),
-    } as ElectronAPI);
+    // contextBridge.exposeInMainWorld("electronAPI", {
+    // uploadFile: (filePath: string) =>
+    //   ipcRenderer.invoke("upload-file", filePath),
+    // deleteFile: (fileName: string) =>
+    //   ipcRenderer.invoke("delete-file", fileName),
+    // fetchFiles: () => ipcRenderer.invoke("fetch-files"),
+    // } as ElectronAPI);
   } catch (err) {
     console.error("Preload initialization failed:", err);
     throw err;

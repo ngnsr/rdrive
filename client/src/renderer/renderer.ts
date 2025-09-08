@@ -1,5 +1,5 @@
 import fileService from "../services/file-service";
-import { renderTable } from "../utils/render-table";
+import { fetchFilesAndRenderTable } from "../utils/render-table";
 import "./styles.css";
 
 let currentUser: { loginId: string } | null = null;
@@ -15,7 +15,13 @@ const userInfo = document.getElementById("userInfo")!;
 const controls = document.getElementById("controls")!;
 const uploadForm = document.getElementById("uploadForm")!;
 const appDiv = document.getElementById("app")!;
+const fileInput =
+  uploadForm.querySelector<HTMLInputElement>('input[type="file"]');
+const fileNameSpan = document.getElementById("fileName")!;
 
+const uploadBtn = uploadForm.querySelector(
+  'button[type="submit"]'
+) as HTMLButtonElement;
 const showSignUpBtn = document.getElementById("showSignUp")!;
 const showSignInBtn = document.getElementById("showSignIn")!;
 const showSignInFromConfirm = document.getElementById("showSignInFromConfirm")!;
@@ -39,8 +45,7 @@ async function checkAuthState() {
     const user = await window.Auth.getUser();
     currentUser = { loginId: user.signInDetails?.loginId };
     showAuthorizedUI(currentUser);
-    await fileService.fetchFiles();
-    await renderTable(currentUser);
+    await fetchFilesAndRenderTable(currentUser);
   } catch {
     currentUser = null;
     showUnauthorizedUI();
@@ -60,8 +65,7 @@ addListenerOnce(loginForm, "submit", async (e) => {
     await window.Auth.login(email, password);
     currentUser = { loginId: email };
     showAuthorizedUI(currentUser);
-    await fileService.fetchFiles();
-    await renderTable(currentUser);
+    await fetchFilesAndRenderTable(currentUser);
   } catch (err) {
     console.error("Login error:", err);
   }
@@ -133,8 +137,36 @@ addListenerOnce(logoutBtn, "click", async () => {
 // ---------------- REFRESH ----------------
 addListenerOnce(refreshBtn, "click", async () => {
   if (!currentUser) return;
-  await fileService.fetchFiles();
-  await renderTable(currentUser);
+  await fetchFilesAndRenderTable(currentUser);
+});
+
+// ---------------- UPLOAD FILE ----------------
+addListenerOnce(fileInput, "change", () => {
+  if (!fileInput?.files) return;
+  if (fileInput.files && fileInput.files.length > 0) {
+    fileNameSpan.textContent = fileInput.files[0].name;
+  } else {
+    fileNameSpan.textContent = "No file chosen";
+  }
+});
+
+addListenerOnce(uploadBtn, "click", async (e) => {
+  e.preventDefault();
+
+  if (!fileInput?.files?.length || !currentUser) {
+    alert("Please select a file before uploading.");
+    return;
+  }
+
+  const file = fileInput.files[0];
+  try {
+    await fileService.uploadFile(file, currentUser.loginId);
+    fileNameSpan.textContent = "No file chosen"; // Reset after upload
+    await fetchFilesAndRenderTable(currentUser);
+  } catch (err) {
+    console.error("Upload error:", err);
+    alert("Upload failed.");
+  }
 });
 
 // ---------------- UI HELPERS ----------------

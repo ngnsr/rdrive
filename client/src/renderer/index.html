@@ -2,15 +2,17 @@
 <html>
   <head>
     <title>My Drive</title>
+    <!-- todo: We probably should generate it dynamically based on .env variables-->
     <meta
       http-equiv="Content-Security-Policy"
       content="
-      default-src 'self';
-      script-src 'self';
-      style-src 'self' 'unsafe-inline';
-      connect-src 'self' https://cognito-idp.eu-north-1.amazonaws.com https://*.amazoncognito.com;
-    "
+    default-src 'self';
+    script-src 'self';
+    style-src 'self' 'unsafe-inline';
+    connect-src 'self' http://localhost:3000 https://cognito-idp.eu-north-1.amazonaws.com
+    https://*.amazoncognito.com https://file-sync-bucket.s3.eu-north-1.amazonaws.com;"
     />
+
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body class="bg-gray-100 p-4">

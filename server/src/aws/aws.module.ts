@@ -11,7 +11,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
       provide: 'S3_CLIENT',
       useFactory: (configService: ConfigService) => {
         return new S3Client({
-          region: configService.get<string>('AWS_REGION', 'us-east-1'),
+          region: configService.get<string>('AWS_REGION_S3', 'us-east-1'),
           credentials: {
             accessKeyId: configService.get<string>('AWS_ACCESS_KEY_ID')!,
             secretAccessKey: configService.get<string>(
@@ -26,7 +26,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
       provide: 'DYNAMODB_CLIENT',
       useFactory: (configService: ConfigService) => {
         return new DynamoDBClient({
-          region: configService.get<string>('AWS_REGION', 'us-east-1'),
+          region: configService.get<string>('AWS_REGION_DYNAMO', 'us-east-1'),
           credentials: {
             accessKeyId: configService.get<string>('AWS_ACCESS_KEY_ID')!,
             secretAccessKey: configService.get<string>(
