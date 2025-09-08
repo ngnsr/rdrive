@@ -79,15 +79,6 @@ async function initialize() {
         }
       },
     } as AuthAPI);
-
-    // Expose file-related APIs
-    // contextBridge.exposeInMainWorld("electronAPI", {
-    // uploadFile: (filePath: string) =>
-    //   ipcRenderer.invoke("upload-file", filePath),
-    // deleteFile: (fileName: string) =>
-    //   ipcRenderer.invoke("delete-file", fileName),
-    // fetchFiles: () => ipcRenderer.invoke("fetch-files"),
-    // } as ElectronAPI);
   } catch (err) {
     console.error("Preload initialization failed:", err);
     throw err;

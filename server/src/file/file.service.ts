@@ -3,17 +3,22 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import {
   DynamoDBClient,
   PutItemCommand,
   GetItemCommand,
   UpdateItemCommand,
+  ScanCommand,
 } from '@aws-sdk/client-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConfigService } from '@nestjs/config';
 import { MarkUploadedDto } from './dto/mark-uploaded.dto';
+import { UploadFileDto } from './dto/upload-file.dto';
+import { FileStatus } from '../common/enums/file-status.enum';
+import { FileMetadata } from '../types';
 
 @Injectable()
 export class FileService {
@@ -29,8 +34,11 @@ export class FileService {
     this.table = this.configService.get<string>('DYNAMO_TABLE')!;
   }
 
-  async getUploadUrl(fileName: string, ownerId: string) {
+  async getUploadUrl(dto: UploadFileDto) {
+    const { fileName, ownerId, size, mimeType, hash, createdAt, modifiedAt } =
+      dto;
     const fileId = uuidv4();
+    const now = new Date().toISOString();
     const key = `${ownerId}/${fileId}/${fileName}`;
 
     // Generate presigned URL
@@ -38,7 +46,7 @@ export class FileService {
       Bucket: this.bucket,
       Key: key,
     });
-    const uploadUrl = await getSignedUrl(this.s3, command, { expiresIn: 3600 }); // todo: make constant or move to .env file
+    const uploadUrl = await getSignedUrl(this.s3, command, { expiresIn: 3600 });
 
     // Store metadata
     await this.dynamo.send(
@@ -48,8 +56,12 @@ export class FileService {
           ownerId: { S: ownerId },
           fileId: { S: fileId },
           fileName: { S: fileName },
-          lastModified: { S: new Date().toISOString() },
-          status: { S: 'pending' }, // todo: create enum
+          size: { N: size.toString() },
+          mimeType: { S: mimeType },
+          createdAt: { S: createdAt },
+          modifiedAt: { S: modifiedAt },
+          status: { S: FileStatus.pending },
+          hash: { S: hash },
         },
       }),
     );
@@ -70,7 +82,7 @@ export class FileService {
         UpdateExpression: 'SET #status = :active, lastModified = :updatedAt',
         ExpressionAttributeNames: { '#status': 'status' },
         ExpressionAttributeValues: {
-          ':active': { S: 'active' },
+          ':active': { S: FileStatus.active },
           ':updatedAt': { S: new Date().toISOString() },
         },
       }),
@@ -87,7 +99,7 @@ export class FileService {
       }),
     );
 
-    if (!Item || Item.status?.S === 'deleted')
+    if (!Item || Item.status?.S === FileStatus.deleted)
       throw new Error('File not found');
 
     const key = `${ownerId}/${fileId}/${Item.fileName?.S}`;
@@ -100,5 +112,71 @@ export class FileService {
       expiresIn: 3600,
     });
     return { fileId, downloadUrl };
+  }
+
+  async getAllOwnerFiles(ownerId: string): Promise<FileMetadata[]> {
+    const scanCommand = new ScanCommand({
+      TableName: this.table,
+      FilterExpression: 'ownerId = :ownerId AND #status = :active',
+      ExpressionAttributeNames: { '#status': 'status' },
+      ExpressionAttributeValues: {
+        ':ownerId': { S: ownerId },
+        ':active': { S: FileStatus.active },
+      },
+    });
+
+    const { Items } = await this.dynamo.send(scanCommand);
+
+    return (Items || []).map((item) => ({
+      fileId: item.fileId.S!,
+      fileName: item.fileName.S!,
+      createdAt: item.createdAt?.S || new Date().toISOString(),
+      modifiedAt: item.modifiedAt?.S || new Date().toISOString(),
+      size: item.size ? parseInt(item.size.N!) : 0,
+      mimeType: item.mimeType?.S || '',
+      status: item.status.S!,
+      ownerId: item.ownerId.S!,
+      hash: item.hash?.S || '',
+    }));
+  }
+
+  async deleteFile(fileId: string, ownerId: string) {
+    // Fetch file metadata from DynamoDB
+    const getCommand = new GetItemCommand({
+      TableName: this.table,
+      Key: {
+        ownerId: { S: ownerId },
+        fileId: { S: fileId },
+      },
+    });
+
+    const { Item } = await this.dynamo.send(getCommand);
+    if (!Item) {
+      throw new Error('File not found');
+    }
+
+    const key = `${ownerId}/${fileId}/${Item.fileName.S}`;
+
+    // Delete from S3
+    await this.s3.send(
+      new DeleteObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      }),
+    );
+
+    // Update DynamoDB status to deleted
+    await this.dynamo.send(
+      new UpdateItemCommand({
+        TableName: this.table,
+        Key: { ownerId: { S: ownerId }, fileId: { S: fileId } },
+        UpdateExpression: 'SET #status = :deleted, modifiedAt = :updatedAt',
+        ExpressionAttributeNames: { '#status': 'status' },
+        ExpressionAttributeValues: {
+          ':deleted': { S: FileStatus.deleted },
+          ':updatedAt': { S: new Date().toISOString() },
+        },
+      }),
+    );
   }
 }

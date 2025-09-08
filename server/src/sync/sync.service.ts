@@ -1,7 +1,7 @@
-// src/sync/sync.service.ts
 import { Injectable, Inject } from '@nestjs/common';
 import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { ConfigService } from '@nestjs/config';
+import { FileMetadata } from '../types';
 
 @Injectable()
 export class SyncService {
@@ -15,31 +15,35 @@ export class SyncService {
   }
 
   async getChangesSince(ownerId: string, since: Date) {
-    const result = await this.dynamo.send(
-      new QueryCommand({
-        TableName: this.table,
-        KeyConditionExpression: 'ownerId = :ownerId',
-        ExpressionAttributeValues: {
-          ':ownerId': { S: ownerId },
-        },
-      }),
-    );
+    const queryCommand = new QueryCommand({
+      TableName: process.env.DYNAMO_TABLE!,
+      KeyConditionExpression: 'ownerId = :ownerId',
+      ExpressionAttributeValues: {
+        ':ownerId': { S: ownerId },
+      },
+    });
 
-    const changes = (result.Items || [])
-      .filter((item) => {
-        const lastModified = item.lastModified?.S;
-        if (!lastModified) return false;
-        return new Date(lastModified) > since;
-      })
-      .map((item) => ({
-        fileId: item.fileId?.S || '',
-        fileName: item.fileName?.S || '',
-        lastModified: item.lastModified?.S || null,
-        status: item.status?.S || 'active',
-        size: item.size?.N ? Number(item.size.N) : null,
-        hash: item.hash?.S || null,
-      }));
+    const resp = await this.dynamo.send(queryCommand);
 
-    return changes;
+    const files: FileMetadata[] = (resp.Items || []).map((item) => ({
+      fileId: item.fileId.S!,
+      fileName: item.fileName.S!,
+      createdAt: item.createdAt?.S || new Date().toISOString(),
+      modifiedAt: item.modifiedAt?.S || new Date().toISOString(),
+      size: item.size ? parseInt(item.size.N!) : 0,
+      mimeType: item.mimeType?.S || '',
+      status: item.status.S!,
+      ownerId: item.ownerId.S!,
+      hash: item.hash?.S || '',
+    }));
+
+    const sinceIso = since.toISOString();
+    const changed = files.filter((f) => f.modifiedAt > sinceIso);
+
+    return {
+      download: changed.filter((f) => f.status === 'active'),
+      delete: changed.filter((f) => f.status === 'deleted'),
+      lastSync: new Date().toISOString(),
+    };
   }
 }

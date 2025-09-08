@@ -1,20 +1,22 @@
 import axios from "axios";
-import { fetchFilesAndRenderTable } from "../utils/render-table";
-
-export type FileItem = {
-  name: string;
-  size: number;
-  createdAt: string;
-  modifiedAt: string;
-  owner: string;
-  editor: string;
-};
+import { addFileRow } from "../utils/table-utils";
+import { computeFileHash } from "../utils/file-utils";
+import { FileItem } from "../types";
 
 type ServerFile = {
-  name: string;
-  filename: string;
-  uploadedAt: string;
-  mtime: string;
+  fileId: string;
+  fileName: string;
+  createdAt: string;
+  modifiedAt: string;
+  mimeType: string;
+  hash: string;
+  size: number;
+};
+
+type SyncResponse = {
+  download: { fileId: string; fileName: string }[];
+  delete: { fileId: string; fileName: string }[];
+  lastSync: string;
 };
 
 class FileService {
@@ -22,17 +24,16 @@ class FileService {
   private sortAscending = true;
   private filterType = "all";
 
-  async fetchFiles(): Promise<void> {
-    throw new Error("Not implemented");
-    // return;
+  async fetchFiles(ownerId: string): Promise<void> {
     try {
-      const response = await axios.get("http://localhost:3000/files");
+      const response = await axios.get(
+        `http://localhost:3000/files?ownerId=${encodeURIComponent(ownerId)}`
+      );
+
       this.currentFiles = response.data.map((file: ServerFile) => ({
-        name: file.name,
-        createdAt: new Date(file.uploadedAt),
-        modifiedAt: new Date(file.mtime),
-        owner: "Unknown", // Placeholder
-        editor: "Unknown", // Placeholder
+        ...file,
+        createdAt: new Date(file.createdAt).toISOString(),
+        modifiedAt: new Date(file.modifiedAt).toISOString(),
       }));
     } catch (error) {
       console.error("Failed to fetch files:", error);
@@ -45,18 +46,9 @@ class FileService {
       return [...this.currentFiles];
     }
     return this.currentFiles.filter((file) =>
-      file.name.endsWith(this.filterType)
+      file.fileName.endsWith(this.filterType)
     );
   }
-
-  // sortByModified(): void {
-  //   this.currentFiles.sort((a, b) => {
-  //     return this.sortAscending
-  //       ? a.modifiedAt.getTime() - b.modifiedAt.getTime()
-  //       : b.modifiedAt.getTime() - a.modifiedAt.getTime();
-  //   });
-  //   this.sortAscending = !this.sortAscending;
-  // }
 
   setFilterType(type: string): void {
     this.filterType = type;
@@ -64,14 +56,19 @@ class FileService {
 
   async uploadFile(file: File, ownerId: string): Promise<void> {
     try {
-      // Step 1: Request presigned URL
+      const now = new Date().toISOString();
+      const fileHash = await computeFileHash(file);
+      // Request presigned URL
       const response = await axios.post(
         "http://localhost:3000/files/upload-url",
         {
-          fileName: file.name,
           ownerId,
+          fileName: file.name,
           size: file.size,
+          createdAt: now,
+          modifiedAt: now,
           mimeType: file.type,
+          hash: fileHash,
         }
       );
 
@@ -88,32 +85,91 @@ class FileService {
         fileId,
       });
 
+      const appContainer = document.getElementById("app");
+      if (appContainer) {
+        const tbody = appContainer.querySelector("tbody");
+        if (tbody) {
+          const uploadedFile = {
+            name: file.name,
+            size: file.size,
+            createdAt: Date.now(),
+            modifiedAt: Date.now(),
+            owner: ownerId,
+          };
+          addFileRow(uploadedFile, tbody as HTMLElement);
+        }
+      }
+
       alert("File uploaded successfully!");
-      await fetchFilesAndRenderTable({ loginId: ownerId }); // Refresh after upload
     } catch (err) {
       console.error("Upload failed:", err);
       alert("Upload failed. Check the console for details.");
     }
   }
 
-  async deleteFile(fileToDelete: FileItem): Promise<void> {
-    const serverFile = this.currentFiles.find(
-      (file) => file.name === fileToDelete.name
-    );
+  async deleteFile(fileId: string, ownerId: string): Promise<void> {
+    const serverFile = this.currentFiles.find((file) => file.fileId === fileId);
+    if (!serverFile) return;
+
     if (
-      serverFile &&
-      window.confirm(`Are you sure you want to delete ${serverFile.name}?`)
-    ) {
-      try {
-        const response = await axios.delete(
-          `http://localhost:3000/files/delete/${serverFile.name}`
-        );
-        alert(response.data.message);
-        await this.fetchFiles(); // todo: fix
-      } catch (error) {
-        console.error("Delete failed:", error);
-        alert("Delete failed. Check the console for details.");
-      }
+      !window.confirm(`Are you sure you want to delete ${serverFile.fileName}?`)
+    )
+      return;
+
+    try {
+      // Call backend to delete by fileId
+      const response = await axios.delete(
+        `http://localhost:3000/files/delete/${fileId}?ownerId=${encodeURIComponent(
+          ownerId
+        )}`
+      );
+      alert(response.data.message);
+
+      // Remove from currentFiles state
+      this.currentFiles = this.currentFiles.filter((f) => f.fileId !== fileId);
+
+      // Remove row from table immediately
+      const row = document
+        .querySelector(`button.delete-btn[data-fileid="${fileId}"]`)
+        ?.closest("tr");
+      if (row?.parentNode) row.parentNode.removeChild(row);
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("Delete failed. Check the console for details.");
+    }
+  }
+
+  async syncFiles(ownerId: string): Promise<SyncResponse> {
+    try {
+      const lastSync = localStorage.getItem("lastSync") || null;
+      const response = await axios.get(
+        `http://localhost:3000/sync/changes?ownerId=${ownerId}&since=${lastSync}`
+      );
+
+      const changes: SyncResponse = response.data;
+      localStorage.setItem("lastSync", changes.lastSync);
+
+      return changes;
+    } catch (err) {
+      console.error("Sync failed:", err);
+      throw err;
+    }
+  }
+
+  async fetchDownloadUrl(
+    fileId: string,
+    ownerId: string
+  ): Promise<{ downloadUrl: string }> {
+    try {
+      const response = await axios.get(
+        `http://localhost:3000/files/download-url/${fileId}?ownerId=${encodeURIComponent(
+          ownerId
+        )}`
+      );
+      return response.data;
+    } catch (err) {
+      console.error("Failed to fetch download URL:", err);
+      throw err;
     }
   }
 }

@@ -10,6 +10,8 @@ export class SyncController {
     @Query('ownerId') ownerId: string,
     @Query('since') since: string,
   ) {
-    return this.syncService.getChangesSince(ownerId, new Date(since));
+    const sinceDate =
+      since && !isNaN(Date.parse(since)) ? new Date(since) : new Date(0);
+    return this.syncService.getChangesSince(ownerId, sinceDate);
   }
 }

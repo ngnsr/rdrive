@@ -1,13 +1,5 @@
 import fileService from "../services/file-service";
-
-interface FileItem {
-  name: string;
-  size: number;
-  createdAt: string | number;
-  modifiedAt: string | number;
-  owner?: string;
-  editor?: string;
-}
+import { FileItem } from "../types";
 
 // Reference the app container once
 const appContainer = document.getElementById("app");
@@ -29,7 +21,7 @@ export async function fetchFilesAndRenderTable(
 
   let files: FileItem[] = [];
   try {
-    await fileService.fetchFiles();
+    await fileService.fetchFiles(currentUser.loginId);
     files = fileService.getFiles();
   } catch (err) {
     console.error("Failed to fetch files:", err);
@@ -48,7 +40,7 @@ export async function fetchFilesAndRenderTable(
     return;
   }
 
-  // --- Render table as before ---
+  // --- Render table ---
   const table = document.createElement("table");
   table.className =
     "table-auto w-full max-w-4xl mx-auto border-collapse border border-gray-300 shadow-lg rounded-lg mt-4";
@@ -71,7 +63,7 @@ export async function fetchFilesAndRenderTable(
     const row = document.createElement("tr");
     row.className = "hover:bg-gray-100 transition-colors";
     row.innerHTML = `
-      <td class="border border-gray-300 px-8 py-4">${file.name}</td>
+      <td class="border border-gray-300 px-8 py-4">${file.fileName}</td>
       <td class="border border-gray-300 px-8 py-4">${formatSize(file.size)}</td>
       <td class="border border-gray-300 px-8 py-4">${new Date(
         file.createdAt
@@ -80,33 +72,33 @@ export async function fetchFilesAndRenderTable(
         file.modifiedAt
       ).toLocaleDateString()}</td>
       <td class="border border-gray-300 px-8 py-4">
-        <button data-filename="${
-          file.name
+        <button data-fileid="${
+          file.fileId
         }" class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Delete</button>
       </td>
     `;
     tbody.appendChild(row);
   });
 
+  tbody.querySelectorAll(".delete-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const fileId = (btn as HTMLElement).getAttribute("data-fileid");
+      if (!fileId) return;
+
+      if (confirm("Are you sure you want to delete this file?")) {
+        try {
+          await fileService.deleteFile(fileId, currentUser.loginId);
+        } catch (err) {
+          console.error("Delete file error:", err);
+          alert("Failed to delete file. Check console.");
+        }
+      }
+    });
+  });
+
   table.appendChild(tbody);
   appContainer.appendChild(table);
-
-  // tbody.querySelectorAll(".delete-btn").forEach((btn) => {
-  //   btn.addEventListener("click", async (e) => {
-  //     e.stopPropagation();
-  //     const fileName = (btn as HTMLElement).getAttribute("data-filename");
-  //     if (!fileName) return;
-
-  //     if (confirm(`Delete file "${fileName}"?`)) {
-  //       try {
-  //         fileService.deleteFile(fileName);
-  //         await fetchFilesAndRenderTable(currentUser);
-  //       } catch (err) {
-  //         console.error("Delete file error:", err);
-  //       }
-  //     }
-  //   });
-  // });
 }
 
 function formatSize(bytes: number): string {

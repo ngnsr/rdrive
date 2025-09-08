@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, IsDefined, IsNumber } from 'class-validator';
 
-export class UploadDto {
+export class UploadFileDto {
   @IsDefined()
   @IsString()
   @IsNotEmpty()
@@ -19,4 +19,19 @@ export class UploadDto {
   @IsDefined()
   @IsNotEmpty()
   mimeType: string;
+
+  @IsString()
+  @IsDefined()
+  @IsNotEmpty()
+  hash: string;
+
+  @IsString()
+  @IsDefined()
+  @IsNotEmpty()
+  createdAt: string;
+
+  @IsString()
+  @IsDefined()
+  @IsNotEmpty()
+  modifiedAt: string;
 }

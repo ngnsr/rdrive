@@ -1,5 +1,6 @@
 import fileService from "../services/file-service";
 import { fetchFilesAndRenderTable } from "../utils/render-table";
+import { addFileRow, removeFileRow, updateFileRow } from "../utils/table-utils";
 import "./styles.css";
 
 let currentUser: { loginId: string } | null = null;
@@ -135,9 +136,43 @@ addListenerOnce(logoutBtn, "click", async () => {
 });
 
 // ---------------- REFRESH ----------------
+
 addListenerOnce(refreshBtn, "click", async () => {
   if (!currentUser) return;
-  await fetchFilesAndRenderTable(currentUser);
+  try {
+    const changes = await fileService.syncFiles(currentUser.loginId);
+
+    // deletes
+    changes.delete.forEach((f) => {
+      removeFileRow(f.fileName, appContainer!);
+    });
+
+    // downloads/updates
+    for (const f of changes.download) {
+      const { downloadUrl } = await fileService.fetchDownloadUrl(
+        f.fileId,
+        currentUser!.loginId
+      );
+
+      const updatedFile = fileService
+        .getFiles()
+        .find((file) => file.fileName === f.fileName);
+
+      if (!updatedFile) continue;
+
+      const row = appContainer?.querySelector(
+        `tr[data-filename="${CSS.escape(f.fileName)}"]`
+      );
+      if (row) {
+        updateFileRow(updatedFile, row as HTMLElement);
+      } else {
+        const tbody = appContainer?.querySelector("tbody");
+        if (tbody) addFileRow(updatedFile, tbody as HTMLElement);
+      }
+    }
+  } catch (err) {
+    console.error("Sync error:", err);
+  }
 });
 
 // ---------------- UPLOAD FILE ----------------
@@ -162,7 +197,6 @@ addListenerOnce(uploadBtn, "click", async (e) => {
   try {
     await fileService.uploadFile(file, currentUser.loginId);
     fileNameSpan.textContent = "No file chosen"; // Reset after upload
-    await fetchFilesAndRenderTable(currentUser);
   } catch (err) {
     console.error("Upload error:", err);
     alert("Upload failed.");
