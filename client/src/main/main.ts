@@ -1,8 +1,6 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import * as path from "path";
 import { config } from "dotenv";
-import fs from "fs";
-const FILES_DIR = path.join(process.cwd(), "files");
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -19,15 +17,6 @@ ipcMain.handle("get-env-vars", async () => {
     AWS_REGION: process.env.AWS_REGION,
   };
 });
-
-// Fetch files
-// ipcMain.handle("fetch-files", async () => {});
-
-// Upload file
-// ipcMain.handle("upload-file", async (_, filePath: string) => {});
-
-// Delete file
-// ipcMain.handle("delete-file", async (_, fileName: string) => {});
 
 function createWindow() {
   mainWindow = new BrowserWindow({

@@ -1,27 +1,10 @@
 import axios from "axios";
 import { addFileRow } from "../utils/table-utils";
 import { computeFileHash } from "../utils/file-utils";
-import { FileItem } from "../types";
-
-type ServerFile = {
-  fileId: string;
-  fileName: string;
-  createdAt: string;
-  modifiedAt: string;
-  mimeType: string;
-  hash: string;
-  size: number;
-};
-
-type SyncResponse = {
-  download: { fileId: string; fileName: string }[];
-  delete: { fileId: string; fileName: string }[];
-  lastSync: string;
-};
+import { FileItem, ServerFile, SyncResponse } from "../types";
 
 class FileService {
   private currentFiles: FileItem[] = [];
-  private sortAscending = true;
   private filterType = "all";
 
   async fetchFiles(ownerId: string): Promise<void> {

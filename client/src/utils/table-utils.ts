@@ -1,5 +1,3 @@
-import fileService from "../services/file-service";
-
 export function addFileRow(file: any, tbody: HTMLElement) {
   const newRow = document.createElement("tr");
   newRow.className = "hover:bg-gray-100 transition-colors";

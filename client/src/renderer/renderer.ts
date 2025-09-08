@@ -136,7 +136,6 @@ addListenerOnce(logoutBtn, "click", async () => {
 });
 
 // ---------------- REFRESH ----------------
-
 addListenerOnce(refreshBtn, "click", async () => {
   if (!currentUser) return;
   try {

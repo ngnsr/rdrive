@@ -1,4 +1,3 @@
-// amplify-config.ts
 import { Amplify } from "aws-amplify";
 import { AuthConfig } from "@aws-amplify/core";
 
