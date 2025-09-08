@@ -6,7 +6,7 @@ import {
 } from '@nestjs/terminus';
 import pjson from '../../package.json';
 import { HealthService } from './health.service';
-import { JwtAuthGuard } from 'src/auth/auth.guard';
+import { JwtAuthGuard } from '../auth/auth.guard';
 
 @Controller('health')
 export class HealthController {
