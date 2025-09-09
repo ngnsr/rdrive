@@ -73,10 +73,11 @@ class FileService {
         const tbody = appContainer.querySelector("tbody");
         if (tbody) {
           const uploadedFile = {
+            fileId,
             name: file.name,
             size: file.size,
-            createdAt: Date.now(),
-            modifiedAt: Date.now(),
+            createdAt: now,
+            modifiedAt: now,
             owner: ownerId,
           };
           addFileRow(uploadedFile, tbody as HTMLElement);

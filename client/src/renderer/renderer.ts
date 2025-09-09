@@ -19,6 +19,7 @@ const appDiv = document.getElementById("app")!;
 const fileInput =
   uploadForm.querySelector<HTMLInputElement>('input[type="file"]');
 const fileNameSpan = document.getElementById("fileName")!;
+const modal = document.getElementById("previewModal") as HTMLElement;
 
 const uploadBtn = uploadForm.querySelector(
   'button[type="submit"]'
@@ -28,6 +29,7 @@ const showSignInBtn = document.getElementById("showSignIn")!;
 const showSignInFromConfirm = document.getElementById("showSignInFromConfirm")!;
 const logoutBtn = document.getElementById("logoutBtn")!;
 const refreshBtn = document.getElementById("refreshButton")!;
+const closeBtn = document.getElementById("closePreview") as HTMLElement;
 
 function addListenerOnce(
   element: HTMLElement | null,
@@ -201,6 +203,17 @@ addListenerOnce(uploadBtn, "click", async (e) => {
     alert("Upload failed.");
   }
 });
+
+// ---------------- PREVIEW MODAL ----------------
+addListenerOnce(closeBtn, "click", () => {
+  modal?.classList.add("hidden");
+});
+
+addListenerOnce(document.body, "keydown", ((e: Event) => {
+  if ((e as KeyboardEvent).key === "Escape") {
+    modal?.classList.add("hidden");
+  }
+}) as EventListener);
 
 // ---------------- UI HELPERS ----------------
 function showAuthorizedUI(user: { loginId: string }) {

@@ -6,14 +6,18 @@
     <meta
       http-equiv="Content-Security-Policy"
       content="
-    default-src 'self';
+    default-src 'self' blob: data:;
     script-src 'self';
     style-src 'self' 'unsafe-inline';
-    connect-src 'self' http://localhost:3000 https://cognito-idp.eu-north-1.amazonaws.com
-    https://*.amazoncognito.com https://file-sync-bucket-1312414151515.s3.us-east-1.amazonaws.com"
+    img-src 'self' blob: data:;
+    media-src 'self' blob: data:;
+    connect-src 'self'
+      http://localhost:3000
+      https://cognito-idp.eu-north-1.amazonaws.com
+      https://*.amazoncognito.com
+      https://file-sync-bucket-1312414151515.s3.us-east-1.amazonaws.com;
+    "
     />
-
-    <link rel="stylesheet" href="styles.css" />
   </head>
   <body class="bg-gray-100 p-4">
     <h1 class="text-2xl font-bold mb-4">My Drive</h1>
@@ -169,6 +173,22 @@
       </form>
 
       <div id="app"></div>
+    </div>
+
+    <div
+      id="previewModal"
+      class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+    >
+      <div class="bg-white rounded-lg p-4 max-w-3xl w-full relative">
+        <button
+          id="closePreview"
+          class="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
+        >
+          &times;
+        </button>
+        <h2 id="previewTitle" class="text-lg font-bold mb-2"></h2>
+        <div id="previewContent" class="overflow-auto max-h-[70vh]"></div>
+      </div>
     </div>
 
     <script src="renderer.js"></script>

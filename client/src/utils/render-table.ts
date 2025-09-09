@@ -74,7 +74,14 @@ export async function fetchFilesAndRenderTable(
       <td class="border border-gray-300 px-8 py-4">
         <button data-fileid="${
           file.fileId
-        }" class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Delete</button>
+        }" class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2">
+          Preview
+        </button>
+        <button data-fileid="${
+          file.fileId
+        }" class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+          Delete
+        </button>
       </td>
     `;
     tbody.appendChild(row);
@@ -93,6 +100,25 @@ export async function fetchFilesAndRenderTable(
           console.error("Delete file error:", err);
           alert("Failed to delete file. Check console.");
         }
+      }
+    });
+  });
+
+  tbody.querySelectorAll(".preview-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const fileId = (btn as HTMLElement).getAttribute("data-fileid");
+      const fileName = (
+        btn.closest("tr")?.querySelector("td")?.textContent || ""
+      ).trim();
+      if (!fileId) return;
+
+      try {
+        await import("./preview-utils").then(({ previewFile }) =>
+          previewFile(fileId, currentUser.loginId, fileName)
+        );
+      } catch (err) {
+        console.error("Preview error:", err);
       }
     });
   });
