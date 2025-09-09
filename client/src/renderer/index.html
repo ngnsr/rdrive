@@ -172,7 +172,55 @@
         </button>
       </form>
 
-      <div id="app"></div>
+      <div id="app" class="hidden">
+        <table
+          id="fileTable"
+          class="table-auto w-full max-w-4xl mx-auto border-collapse border border-gray-300 shadow-lg rounded-lg mt-4"
+        >
+          <thead class="bg-gray-300">
+            <tr>
+              <th
+                data-sort="fileName"
+                class="sortable relative cursor-pointer px-8 py-4 text-left"
+              >
+                Name
+                <span
+                  class="sort-arrow absolute right-2 top-1/2 -translate-y-1/2"
+                ></span>
+              </th>
+              <th
+                data-sort="size"
+                class="sortable relative cursor-pointer px-8 py-4 text-left"
+              >
+                Size
+                <span
+                  class="sort-arrow absolute right-2 top-1/2 -translate-y-1/2"
+                ></span>
+              </th>
+              <th
+                data-sort="createdAt"
+                class="sortable relative cursor-pointer px-8 py-4 text-left"
+              >
+                Created
+                <span
+                  class="sort-arrow absolute right-2 top-1/2 -translate-y-1/2"
+                ></span>
+              </th>
+              <th
+                data-sort="modifiedAt"
+                class="sortable relative cursor-pointer px-8 py-4 text-left"
+              >
+                Modified
+                <span
+                  class="sort-arrow absolute right-2 top-1/2 -translate-y-1/2"
+                ></span>
+              </th>
+              <th class="px-8 py-4 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="fileTableBody"></tbody>
+        </table>
+      </div>
     </div>
 
     <div

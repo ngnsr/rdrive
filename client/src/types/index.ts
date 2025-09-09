@@ -4,7 +4,7 @@ export interface FileItem {
   size: number;
   createdAt: string | number;
   modifiedAt: string | number;
-  owner?: string;
+  ownerId: string;
   hash?: string;
 }
 
@@ -23,3 +23,5 @@ export type SyncResponse = {
   delete: { fileId: string; fileName: string }[];
   lastSync: string;
 };
+
+export type User = { loginId: string } | null;

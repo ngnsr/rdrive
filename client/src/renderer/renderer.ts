@@ -1,11 +1,16 @@
 import fileService from "../services/file-service";
 import { fetchFilesAndRenderTable } from "../utils/render-table";
-import { addFileRow, removeFileRow, updateFileRow } from "../utils/table-utils";
 import "./styles.css";
 
-let currentUser: { loginId: string } | null = null;
+// Initialize
+window.currentUser = null;
 
-// DOM elements
+// Helper to update current user globally
+window.setCurrentUser = (user: { loginId: string } | null) => {
+  window.currentUser = user;
+};
+
+// ---------------- DOM ELEMENTS ----------------
 const authContainer = document.getElementById("authContainer")!;
 const appContainer = document.getElementById("appContainer")!;
 const loginForm = document.getElementById("loginForm") as HTMLFormElement;
@@ -31,6 +36,7 @@ const logoutBtn = document.getElementById("logoutBtn")!;
 const refreshBtn = document.getElementById("refreshButton")!;
 const closeBtn = document.getElementById("closePreview") as HTMLElement;
 
+// ---------------- UTILS ----------------
 function addListenerOnce(
   element: HTMLElement | null,
   event: string,
@@ -42,15 +48,48 @@ function addListenerOnce(
   }
 }
 
+// ---------------- UI HELPERS ----------------
+async function showAuthorizedUI(user: { loginId: string }) {
+  // Set current user globally
+  window.setCurrentUser(user);
+  // Show main UI
+  authContainer.classList.add("hidden");
+  appContainer.classList.remove("hidden"); // make table container visible
+  controls.classList.remove("hidden");
+  uploadForm.classList.remove("hidden");
+  userInfo.classList.remove("hidden");
+  userEmail.innerText = user.loginId || "Unknown";
+  // Remove any hidden class from the table itself, just in case
+  appDiv.classList.remove("hidden");
+  await fetchFilesAndRenderTable(user);
+}
+
+function showUnauthorizedUI() {
+  // Clear global user
+  window.setCurrentUser(null);
+  // Show auth forms
+  authContainer.classList.remove("hidden");
+  loginForm.classList.remove("hidden");
+  signupForm.classList.add("hidden");
+  confirmForm.classList.add("hidden");
+  // Hide main app UI
+  appContainer.classList.add("hidden");
+  controls.classList.add("hidden");
+  uploadForm.classList.add("hidden");
+  userInfo.classList.add("hidden");
+  userEmail.innerText = "";
+
+  // Clear table content and remove hidden class
+  appDiv.innerHTML = "";
+  appDiv.classList.add("hidden");
+}
+
 // ---------------- AUTH STATE ----------------
 async function checkAuthState() {
   try {
     const user = await window.Auth.getUser();
-    currentUser = { loginId: user.signInDetails?.loginId };
-    showAuthorizedUI(currentUser);
-    await fetchFilesAndRenderTable(currentUser);
+    await showAuthorizedUI({ loginId: user.signInDetails?.loginId });
   } catch {
-    currentUser = null;
     showUnauthorizedUI();
   }
 }
@@ -66,9 +105,7 @@ addListenerOnce(loginForm, "submit", async (e) => {
 
   try {
     await window.Auth.login(email, password);
-    currentUser = { loginId: email };
-    showAuthorizedUI(currentUser);
-    await fetchFilesAndRenderTable(currentUser);
+    showAuthorizedUI({ loginId: email });
   } catch (err) {
     console.error("Login error:", err);
   }
@@ -130,7 +167,6 @@ addListenerOnce(showSignInFromConfirm, "click", () => {
 addListenerOnce(logoutBtn, "click", async () => {
   try {
     await window.Auth.logout();
-    currentUser = null;
     showUnauthorizedUI();
   } catch (err) {
     console.error("Logout error:", err);
@@ -139,38 +175,11 @@ addListenerOnce(logoutBtn, "click", async () => {
 
 // ---------------- REFRESH ----------------
 addListenerOnce(refreshBtn, "click", async () => {
-  if (!currentUser) return;
+  const user = window.currentUser;
+  if (!user) return;
   try {
-    const changes = await fileService.syncFiles(currentUser.loginId);
-
-    // deletes
-    changes.delete.forEach((f) => {
-      removeFileRow(f.fileName, appContainer!);
-    });
-
-    // downloads/updates
-    for (const f of changes.download) {
-      const { downloadUrl } = await fileService.fetchDownloadUrl(
-        f.fileId,
-        currentUser!.loginId
-      );
-
-      const updatedFile = fileService
-        .getFiles()
-        .find((file) => file.fileName === f.fileName);
-
-      if (!updatedFile) continue;
-
-      const row = appContainer?.querySelector(
-        `tr[data-filename="${CSS.escape(f.fileName)}"]`
-      );
-      if (row) {
-        updateFileRow(updatedFile, row as HTMLElement);
-      } else {
-        const tbody = appContainer?.querySelector("tbody");
-        if (tbody) addFileRow(updatedFile, tbody as HTMLElement);
-      }
-    }
+    const changes = await fileService.syncFiles(user.loginId);
+    await fetchFilesAndRenderTable(user); // re-render table
   } catch (err) {
     console.error("Sync error:", err);
   }
@@ -179,25 +188,22 @@ addListenerOnce(refreshBtn, "click", async () => {
 // ---------------- UPLOAD FILE ----------------
 addListenerOnce(fileInput, "change", () => {
   if (!fileInput?.files) return;
-  if (fileInput.files && fileInput.files.length > 0) {
-    fileNameSpan.textContent = fileInput.files[0].name;
-  } else {
-    fileNameSpan.textContent = "No file chosen";
-  }
+  fileNameSpan.textContent = fileInput.files[0]?.name || "No file chosen";
 });
 
 addListenerOnce(uploadBtn, "click", async (e) => {
   e.preventDefault();
-
-  if (!fileInput?.files?.length || !currentUser) {
+  const user = window.currentUser;
+  if (!fileInput?.files?.length || !user) {
     alert("Please select a file before uploading.");
     return;
   }
 
   const file = fileInput.files[0];
   try {
-    await fileService.uploadFile(file, currentUser.loginId);
-    fileNameSpan.textContent = "No file chosen"; // Reset after upload
+    await fileService.uploadFile(file, user.loginId);
+    fileNameSpan.textContent = "No file chosen";
+    await fetchFilesAndRenderTable(user); // update table after upload
   } catch (err) {
     console.error("Upload error:", err);
     alert("Upload failed.");
@@ -209,35 +215,11 @@ addListenerOnce(closeBtn, "click", () => {
   modal?.classList.add("hidden");
 });
 
-addListenerOnce(document.body, "keydown", ((e: Event) => {
+addListenerOnce(document.body, "keydown", (e) => {
   if ((e as KeyboardEvent).key === "Escape") {
     modal?.classList.add("hidden");
   }
-}) as EventListener);
-
-// ---------------- UI HELPERS ----------------
-function showAuthorizedUI(user: { loginId: string }) {
-  authContainer.classList.add("hidden");
-  appContainer.classList.remove("hidden");
-  controls.classList.remove("hidden");
-  uploadForm.classList.remove("hidden");
-  userInfo.classList.remove("hidden");
-  userEmail.innerText = user.loginId || "Unknown";
-}
-
-function showUnauthorizedUI() {
-  authContainer.classList.remove("hidden");
-  loginForm.classList.remove("hidden");
-  signupForm.classList.add("hidden");
-  confirmForm.classList.add("hidden");
-
-  appContainer.classList.add("hidden");
-  controls.classList.add("hidden");
-  uploadForm.classList.add("hidden");
-  userInfo.classList.add("hidden");
-  userEmail.innerText = "";
-  appDiv.innerHTML = "";
-}
+});
 
 // ---------------- INIT ----------------
 checkAuthState();

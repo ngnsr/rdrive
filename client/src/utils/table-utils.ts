@@ -1,49 +1,16 @@
 import fileService from "../services/file-service";
 import { previewFile } from "./preview-utils";
+import { FileItem } from "../types";
 
-export function addFileRow(file: any, tbody: HTMLElement) {
+export function addFileRow(file: FileItem, tbody: HTMLElement) {
   const newRow = document.createElement("tr");
   newRow.className = "hover:bg-gray-100 transition-colors";
   newRow.setAttribute("data-fileid", file.fileId);
-  newRow.innerHTML = renderRowContent(file);
+  newRow.setAttribute("data-filename", file.fileName);
 
-  tbody.appendChild(newRow);
-  wireRowEvents(newRow, file);
-}
-
-export function updateFileRow(file: any, row: HTMLElement) {
-  row.innerHTML = renderRowContent(file);
-  wireRowEvents(row, file);
-}
-
-function wireRowEvents(row: HTMLElement, file: any) {
-  const previewBtn = row.querySelector(".preview-btn");
-  previewBtn?.addEventListener("click", async () => {
-    await previewFile(file.fileId, file.owner, file.name);
-  });
-
-  const deleteBtn = row.querySelector(".delete-btn");
-  deleteBtn?.addEventListener("click", async () => {
-    try {
-      await fileService.deleteFile(file.fileId, file.owner);
-      row.remove();
-    } catch (err) {
-      console.error("Delete failed:", err);
-      alert("Failed to delete file.");
-    }
-  });
-}
-
-export function removeFileRow(fileName: string, appContainer: HTMLElement) {
-  const row = appContainer.querySelector(
-    `tr[data-filename="${CSS.escape(fileName)}"]`
-  );
-  if (row) row.remove();
-}
-
-function renderRowContent(file: any): string {
-  return `
-    <td class="border border-gray-300 px-8 py-4">${file.name}</td>
+  // Use existing HTML headers; just fill cells
+  newRow.innerHTML = `
+    <td class="border border-gray-300 px-8 py-4">${file.fileName}</td>
     <td class="border border-gray-300 px-8 py-4">${formatSize(file.size)}</td>
     <td class="border border-gray-300 px-8 py-4">${new Date(
       file.createdAt
@@ -52,17 +19,71 @@ function renderRowContent(file: any): string {
       file.modifiedAt
     ).toLocaleDateString()}</td>
     <td class="border border-gray-300 px-8 py-4">
-      <button data-fileid="${file.fileId}"
-        data-filename="${file.name}"
-        class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2">
+      <button class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2">
         Preview
       </button>
-      <button data-fileid="${file.fileId}"
-        class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+      <button class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
         Delete
       </button>
     </td>
   `;
+
+  tbody.appendChild(newRow);
+  wireRowEvents(newRow, file);
+}
+
+export function updateFileRow(file: FileItem, row: HTMLElement) {
+  row.innerHTML = `
+    <td class="border border-gray-300 px-8 py-4">${file.fileName}</td>
+    <td class="border border-gray-300 px-8 py-4">${formatSize(file.size)}</td>
+    <td class="border border-gray-300 px-8 py-4">${new Date(
+      file.createdAt
+    ).toLocaleDateString()}</td>
+    <td class="border border-gray-300 px-8 py-4">${new Date(
+      file.modifiedAt
+    ).toLocaleDateString()}</td>
+    <td class="border border-gray-300 px-8 py-4">
+      <button class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2">
+        Preview
+      </button>
+      <button class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+        Delete
+      </button>
+    </td>
+  `;
+  wireRowEvents(row, file);
+}
+
+function wireRowEvents(row: HTMLElement, file: FileItem) {
+  const previewBtn = row.querySelector(".preview-btn");
+  const deleteBtn = row.querySelector(".delete-btn");
+
+  // Remove existing listeners before adding new ones
+  previewBtn?.replaceWith(previewBtn.cloneNode(true));
+  deleteBtn?.replaceWith(deleteBtn.cloneNode(true));
+
+  row.querySelector(".preview-btn")?.addEventListener("click", async () => {
+    await previewFile(file.fileId, file.ownerId, file.fileName);
+  });
+
+  row.querySelector(".delete-btn")?.addEventListener("click", async () => {
+    if (!confirm(`Are you sure you want to delete ${file.fileName}?`)) return;
+
+    try {
+      await fileService.deleteFile(file.fileId, file.ownerId);
+      row.remove();
+    } catch (err) {
+      console.error("Delete failed:", err);
+      alert("Failed to delete file.");
+    }
+  });
+}
+
+export function removeFileRow(fileName: string) {
+  const row = document.querySelector(
+    `tr[data-filename="${CSS.escape(fileName)}"]`
+  );
+  if (row) row.remove();
 }
 
 function formatSize(bytes: number): string {

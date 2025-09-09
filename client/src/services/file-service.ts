@@ -74,11 +74,11 @@ class FileService {
         if (tbody) {
           const uploadedFile = {
             fileId,
-            name: file.name,
+            ownerId,
+            fileName: file.name,
             size: file.size,
             createdAt: now,
             modifiedAt: now,
-            owner: ownerId,
           };
           addFileRow(uploadedFile, tbody as HTMLElement);
         }

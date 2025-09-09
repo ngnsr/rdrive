@@ -9,5 +9,7 @@ declare global {
       getUser: () => Promise<any>;
       confirm: (email: string, code: string) => Promise<any>;
     };
+    currentUser: { loginId: string } | null;
+    setCurrentUser: (user: { loginId: string } | null) => void;
   }
 }
