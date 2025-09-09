@@ -86,6 +86,17 @@ export function removeFileRow(fileName: string) {
   if (row) row.remove();
 }
 
+export function addListenerOnce(
+  element: HTMLElement | null,
+  event: string,
+  listener: EventListenerOrEventListenerObject
+) {
+  if (element && !(element as any)._listenerAdded) {
+    element.addEventListener(event, listener);
+    (element as any)._listenerAdded = true;
+  }
+}
+
 function formatSize(bytes: number): string {
   if (bytes === 0) return "0 B";
   const sizes = ["B", "KB", "MB", "GB", "TB"];

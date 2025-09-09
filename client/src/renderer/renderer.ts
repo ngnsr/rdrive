@@ -1,5 +1,6 @@
 import fileService from "../services/file-service";
 import { fetchFilesAndRenderTable } from "../utils/render-table";
+import { addListenerOnce } from "../utils/table-utils";
 import "./styles.css";
 
 // Initialize
@@ -35,18 +36,6 @@ const showSignInFromConfirm = document.getElementById("showSignInFromConfirm")!;
 const logoutBtn = document.getElementById("logoutBtn")!;
 const refreshBtn = document.getElementById("refreshButton")!;
 const closeBtn = document.getElementById("closePreview") as HTMLElement;
-
-// ---------------- UTILS ----------------
-function addListenerOnce(
-  element: HTMLElement | null,
-  event: string,
-  listener: EventListenerOrEventListenerObject
-) {
-  if (element && !(element as any)._listenerAdded) {
-    element.addEventListener(event, listener);
-    (element as any)._listenerAdded = true;
-  }
-}
 
 // ---------------- UI HELPERS ----------------
 async function showAuthorizedUI(user: { loginId: string }) {
@@ -203,7 +192,6 @@ addListenerOnce(uploadBtn, "click", async (e) => {
   try {
     await fileService.uploadFile(file, user.loginId);
     fileNameSpan.textContent = "No file chosen";
-    await fetchFilesAndRenderTable(user); // update table after upload
   } catch (err) {
     console.error("Upload error:", err);
     alert("Upload failed.");

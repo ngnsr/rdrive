@@ -1,5 +1,5 @@
 import axios from "axios";
-import { addFileRow } from "../utils/table-utils";
+import { addFileRow, removeFileRow } from "../utils/table-utils";
 import { computeFileHash } from "../utils/file-utils";
 import { FileItem, ServerFile, SyncResponse } from "../types";
 
@@ -33,6 +33,14 @@ class FileService {
     );
   }
 
+  addFile(file: FileItem) {
+    this.currentFiles.push(file);
+  }
+
+  removeFile(fileId: string) {
+    this.currentFiles = this.currentFiles.filter((f) => f.fileId !== fileId);
+  }
+
   setFilterType(type: string): void {
     this.filterType = type;
   }
@@ -41,18 +49,21 @@ class FileService {
     try {
       const now = new Date().toISOString();
       const fileHash = await computeFileHash(file);
+
+      const fileObj = {
+        ownerId,
+        fileName: file.name,
+        size: file.size,
+        createdAt: now,
+        modifiedAt: now,
+        mimeType: file.type,
+        hash: fileHash,
+      };
+
       // Request presigned URL
       const response = await axios.post(
         "http://localhost:3000/files/upload-url",
-        {
-          ownerId,
-          fileName: file.name,
-          size: file.size,
-          createdAt: now,
-          modifiedAt: now,
-          mimeType: file.type,
-          hash: fileHash,
-        }
+        fileObj
       );
 
       const { uploadUrl, fileId } = response.data;
@@ -68,20 +79,17 @@ class FileService {
         fileId,
       });
 
+      // --- Add fileId to object for table / in-memory store ---
+      const uploadedFile = { ...fileObj, fileId };
+
+      // Add to fileService memory
+      this.addFile(uploadedFile);
+
+      // Render the row in the table
       const appContainer = document.getElementById("app");
-      if (appContainer) {
-        const tbody = appContainer.querySelector("tbody");
-        if (tbody) {
-          const uploadedFile = {
-            fileId,
-            ownerId,
-            fileName: file.name,
-            size: file.size,
-            createdAt: now,
-            modifiedAt: now,
-          };
-          addFileRow(uploadedFile, tbody as HTMLElement);
-        }
+      const tbody = appContainer?.querySelector("tbody");
+      if (tbody) {
+        addFileRow(uploadedFile, tbody as HTMLElement);
       }
 
       alert("File uploaded successfully!");
@@ -110,13 +118,8 @@ class FileService {
       alert(response.data.message);
 
       // Remove from currentFiles state
-      this.currentFiles = this.currentFiles.filter((f) => f.fileId !== fileId);
-
-      // Remove row from table immediately
-      const row = document
-        .querySelector(`button.delete-btn[data-fileid="${fileId}"]`)
-        ?.closest("tr");
-      if (row?.parentNode) row.parentNode.removeChild(row);
+      this.removeFile(fileId);
+      removeFileRow(serverFile.fileName);
     } catch (error) {
       console.error("Delete failed:", error);
       alert("Delete failed. Check the console for details.");

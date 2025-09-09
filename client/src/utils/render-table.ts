@@ -1,6 +1,6 @@
 import fileService from "../services/file-service";
 import { FileItem, User } from "../types";
-import { addFileRow } from "../utils/table-utils";
+import { addFileRow, addListenerOnce } from "../utils/table-utils";
 
 let currentSort = { key: "modifiedAt", ascending: true };
 
@@ -76,7 +76,7 @@ headers.forEach((th) => {
   // store original header text
   if (!th.dataset.origText) th.dataset.origText = th.innerText;
 
-  th.addEventListener("click", () => {
+  addListenerOnce(th as HTMLElement, "click", () => {
     const key = th.getAttribute("data-sort")!;
     // toggle ascending if same column, else default to ascending
     currentSort.ascending =
