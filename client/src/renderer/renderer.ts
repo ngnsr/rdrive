@@ -12,65 +12,63 @@ window.setCurrentUser = (user: { loginId: string } | null) => {
 };
 
 // ---------------- DOM ELEMENTS ----------------
-const authContainer = document.getElementById("authContainer")!;
-const appContainer = document.getElementById("appContainer")!;
+const authContainer = document.getElementById("authContainer");
+const appContainer = document.getElementById("appContainer");
 const loginForm = document.getElementById("loginForm") as HTMLFormElement;
 const signupForm = document.getElementById("signupForm") as HTMLFormElement;
 const confirmForm = document.getElementById("confirmForm") as HTMLFormElement;
-const userEmail = document.getElementById("userEmail")!;
-const userInfo = document.getElementById("userInfo")!;
-const controls = document.getElementById("controls")!;
-const uploadForm = document.getElementById("uploadForm")!;
-const appDiv = document.getElementById("app")!;
-const fileInput =
-  uploadForm.querySelector<HTMLInputElement>('input[type="file"]');
-const fileNameSpan = document.getElementById("fileName")!;
-const modal = document.getElementById("previewModal") as HTMLElement;
+const userEmail = document.getElementById("userEmail");
+const userInfo = document.getElementById("userInfo");
+const controls = document.getElementById("controls");
+const appDiv = document.getElementById("app");
 
-const uploadBtn = uploadForm.querySelector(
-  'button[type="submit"]'
+const modal = document.getElementById("previewModal");
+
+const uploadButton = document.getElementById(
+  "uploadButton"
 ) as HTMLButtonElement;
-const showSignUpBtn = document.getElementById("showSignUp")!;
-const showSignInBtn = document.getElementById("showSignIn")!;
-const showSignInFromConfirm = document.getElementById("showSignInFromConfirm")!;
-const logoutBtn = document.getElementById("logoutBtn")!;
-const refreshBtn = document.getElementById("refreshButton")!;
-const closeBtn = document.getElementById("closePreview") as HTMLElement;
+const fileInput = document.getElementById("fileInput") as HTMLInputElement; // hidden input
+
+const showSignUpBtn = document.getElementById("showSignUp");
+const showSignInBtn = document.getElementById("showSignIn");
+const showSignInFromConfirm = document.getElementById("showSignInFromConfirm");
+const logoutBtn = document.getElementById("logoutBtn");
+const refreshBtn = document.getElementById("refreshButton");
+const closeBtn = document.getElementById("closePreview");
 
 // ---------------- UI HELPERS ----------------
 async function showAuthorizedUI(user: { loginId: string }) {
-  // Set current user globally
   window.setCurrentUser(user);
-  // Show main UI
-  authContainer.classList.add("hidden");
-  appContainer.classList.remove("hidden"); // make table container visible
-  controls.classList.remove("hidden");
-  uploadForm.classList.remove("hidden");
-  userInfo.classList.remove("hidden");
-  userEmail.innerText = user.loginId || "Unknown";
-  // Remove any hidden class from the table itself, just in case
-  appDiv.classList.remove("hidden");
+
+  authContainer?.classList.add("hidden");
+  appContainer?.classList.remove("hidden");
+  controls?.classList.remove("hidden");
+  userInfo?.classList.remove("hidden");
+  if (userEmail) userEmail.innerText = user.loginId || "Unknown";
+  appDiv?.classList.remove("hidden");
+
+  // // Wait to DOM to fully load
+  // await new Promise((resolve) => requestAnimationFrame(resolve));
   await fetchFilesAndRenderTable(user);
 }
 
 function showUnauthorizedUI() {
-  // Clear global user
   window.setCurrentUser(null);
-  // Show auth forms
-  authContainer.classList.remove("hidden");
-  loginForm.classList.remove("hidden");
-  signupForm.classList.add("hidden");
-  confirmForm.classList.add("hidden");
-  // Hide main app UI
-  appContainer.classList.add("hidden");
-  controls.classList.add("hidden");
-  uploadForm.classList.add("hidden");
-  userInfo.classList.add("hidden");
-  userEmail.innerText = "";
 
-  // Clear table content and remove hidden class
-  appDiv.innerHTML = "";
-  appDiv.classList.add("hidden");
+  authContainer?.classList.remove("hidden");
+  loginForm?.classList.remove("hidden");
+  signupForm?.classList.add("hidden");
+  confirmForm?.classList.add("hidden");
+
+  appContainer?.classList.add("hidden");
+  controls?.classList.add("hidden");
+  userInfo?.classList.add("hidden");
+  if (userEmail) userEmail.innerText = "";
+
+  if (appDiv) {
+    appDiv.innerHTML = "";
+    appDiv.classList.add("hidden");
+  }
 }
 
 // ---------------- AUTH STATE ----------------
@@ -167,36 +165,53 @@ addListenerOnce(refreshBtn, "click", async () => {
   const user = window.currentUser;
   if (!user) return;
   try {
-    const changes = await fileService.syncFiles(user.loginId);
-    await fetchFilesAndRenderTable(user); // re-render table
+    // await fileService.syncFiles(user.loginId);
+    await fetchFilesAndRenderTable(user);
   } catch (err) {
     console.error("Sync error:", err);
   }
 });
 
 // ---------------- UPLOAD FILE ----------------
-addListenerOnce(fileInput, "change", () => {
-  if (!fileInput?.files) return;
-  fileNameSpan.textContent = fileInput.files[0]?.name || "No file chosen";
+addListenerOnce(uploadButton, "click", () => {
+  fileInput?.click();
 });
 
-addListenerOnce(uploadBtn, "click", async (e) => {
-  e.preventDefault();
+addListenerOnce(fileInput, "change", async () => {
   const user = window.currentUser;
-  if (!fileInput?.files?.length || !user) {
-    alert("Please select a file before uploading.");
-    return;
-  }
+  if (!fileInput.files?.length || !user) return;
 
   const file = fileInput.files[0];
   try {
     await fileService.uploadFile(file, user.loginId);
-    fileNameSpan.textContent = "No file chosen";
   } catch (err) {
     console.error("Upload error:", err);
     alert("Upload failed.");
+  } finally {
+    fileInput.value = ""; // reset so same file can be picked again
   }
 });
+
+// ---------------- PROFILE MENU ----------------
+const profileBtn = document.getElementById("profileBtn");
+const profileMenu = document.getElementById("profileMenu");
+
+if (profileBtn && profileMenu) {
+  profileBtn.addEventListener("click", (e) => {
+    e.stopPropagation(); // prevent click from bubbling to body
+    profileMenu.classList.toggle("hidden");
+  });
+
+  // Close menu if clicking outside
+  document.addEventListener("click", (e) => {
+    if (
+      !profileMenu.contains(e.target as Node) &&
+      !profileBtn.contains(e.target as Node)
+    ) {
+      profileMenu.classList.add("hidden");
+    }
+  });
+}
 
 // ---------------- PREVIEW MODAL ----------------
 addListenerOnce(closeBtn, "click", () => {

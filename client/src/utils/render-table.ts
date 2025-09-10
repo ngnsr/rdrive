@@ -1,6 +1,10 @@
 import fileService from "../services/file-service";
 import { FileItem, User } from "../types";
-import { addFileRow, addListenerOnce } from "../utils/table-utils";
+import {
+  addFileRow,
+  addListenerOnce,
+  clearFileTable,
+} from "../utils/table-utils";
 
 let currentSort = { key: "modifiedAt", ascending: true };
 
@@ -11,7 +15,7 @@ export interface SortState {
 
 export async function renderFiles(files?: FileItem[]) {
   const tbody = document.querySelector("tbody")!;
-  tbody.innerHTML = ""; // clear existing rows
+  // if (!tbody) return;
 
   // If no files provided, fetch them from service
   if (!files) {
@@ -57,6 +61,7 @@ export async function renderFiles(files?: FileItem[]) {
     return currentSort.ascending ? valA - valB : valB - valA;
   });
 
+  clearFileTable();
   // --- Add rows ---
   files.forEach((file) => addFileRow(file, tbody));
 }
@@ -97,6 +102,7 @@ function updateSortIndicators() {
 
   headers.forEach((th) => {
     const arrow = th.querySelector<HTMLSpanElement>(".sort-arrow")!;
+    // if (!arrow) return;
     arrow.innerHTML = ""; // reset
 
     if (th.getAttribute("data-sort") === currentSort.key) {

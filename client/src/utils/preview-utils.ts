@@ -29,6 +29,7 @@ export async function previewFile(
     let textContent: string | null = null;
 
     const previewContent = document.getElementById("previewContent")!;
+    // if (!previewContent) return;
     previewContent.innerHTML = ""; // clear old preview
 
     if (

@@ -3,6 +3,7 @@ import { previewFile } from "./preview-utils";
 import { FileItem } from "../types";
 
 export function addFileRow(file: FileItem, tbody: HTMLElement) {
+  if (!tbody) return;
   const newRow = document.createElement("tr");
   newRow.className = "hover:bg-gray-100 transition-colors";
   newRow.setAttribute("data-fileid", file.fileId);
@@ -95,6 +96,12 @@ export function addListenerOnce(
     element.addEventListener(event, listener);
     (element as any)._listenerAdded = true;
   }
+}
+
+export function clearFileTable() {
+  const tbody = document.getElementById("fileTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
 }
 
 function formatSize(bytes: number): string {
