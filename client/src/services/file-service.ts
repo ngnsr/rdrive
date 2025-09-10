@@ -1,7 +1,7 @@
 import axios from "axios";
-import { addFileRow, removeFileRow } from "../utils/table-utils";
 import { computeFileHash } from "../utils/file-utils";
 import { FileItem, ServerFile, SyncResponse } from "../types";
+import { addFileRow, removeFileRow, updateFileRow } from "../utils/table-utils";
 
 class FileService {
   private currentFiles: FileItem[] = [];
@@ -25,11 +25,9 @@ class FileService {
   }
 
   getFiles(): FileItem[] {
-    if (this.filterType === "all") {
-      return [...this.currentFiles];
-    }
-    return this.currentFiles.filter((file) =>
-      file.fileName.endsWith(this.filterType)
+    if (this.filterType === "all") return [...this.currentFiles];
+    return this.currentFiles.filter((f) =>
+      f.fileName.endsWith(this.filterType)
     );
   }
 
@@ -41,11 +39,16 @@ class FileService {
     this.currentFiles = this.currentFiles.filter((f) => f.fileId !== fileId);
   }
 
-  setFilterType(type: string): void {
+  updateFile(file: FileItem) {
+    const index = this.currentFiles.findIndex((f) => f.fileId === file.fileId);
+    if (index !== -1) this.currentFiles[index] = file;
+  }
+
+  setFilterType(type: string) {
     this.filterType = type;
   }
 
-  async uploadFile(file: File, ownerId: string): Promise<void> {
+  async uploadFile(file: File, ownerId: string) {
     try {
       const now = new Date().toISOString();
       const fileHash = await computeFileHash(file);
@@ -60,69 +63,62 @@ class FileService {
         hash: fileHash,
       };
 
-      // Request presigned URL
       const response = await axios.post(
         "http://localhost:3000/files/upload-url",
         fileObj
       );
-
       const { uploadUrl, fileId } = response.data;
 
-      // Upload file directly to S3
       await axios.put(uploadUrl, file, {
         headers: { "Content-Type": file.type },
       });
 
-      // Notify backend upload completed
       await axios.post("http://localhost:3000/files/mark-uploaded", {
         ownerId,
         fileId,
       });
 
-      // --- Add fileId to object for table / in-memory store ---
       const uploadedFile = { ...fileObj, fileId };
-
-      // Add to fileService memory
       this.addFile(uploadedFile);
 
-      // Render the row in the table
-      const appContainer = document.getElementById("app");
-      const tbody = appContainer?.querySelector("tbody");
-      if (tbody) {
-        addFileRow(uploadedFile, tbody as HTMLElement);
-      }
+      // Safely render row
+      const tbody =
+        document.querySelector<HTMLTableSectionElement>("#fileTableBody");
+      if (tbody) addFileRow(uploadedFile, tbody);
 
-      alert("File uploaded successfully!");
+      console.log(`Uploaded: ${file.name}`);
     } catch (err) {
       console.error("Upload failed:", err);
-      alert("Upload failed. Check the console for details.");
+      alert("Upload failed. Check console.");
     }
   }
 
-  async deleteFile(fileId: string, ownerId: string): Promise<void> {
-    const serverFile = this.currentFiles.find((file) => file.fileId === fileId);
-    if (!serverFile) return;
+  async deleteFileByName(fileName: string, ownerId: string) {
+    const file = this.currentFiles.find((f) => f.fileName === fileName);
+    if (!file) return;
+    return this.deleteFile(file.fileId, ownerId);
+  }
 
-    if (
-      !window.confirm(`Are you sure you want to delete ${serverFile.fileName}?`)
-    )
-      return;
+  async deleteFile(fileId: string, ownerId: string) {
+    const file = this.currentFiles.find((f) => f.fileId === fileId);
+    if (!file) return;
+
+    if (!window.confirm(`Delete ${file.fileName}?`)) return;
 
     try {
-      // Call backend to delete by fileId
-      const response = await axios.delete(
+      await axios.delete(
         `http://localhost:3000/files/delete/${fileId}?ownerId=${encodeURIComponent(
           ownerId
         )}`
       );
-      alert(response.data.message);
-
-      // Remove from currentFiles state
       this.removeFile(fileId);
-      removeFileRow(serverFile.fileName);
-    } catch (error) {
-      console.error("Delete failed:", error);
-      alert("Delete failed. Check the console for details.");
+
+      const tbody =
+        document.querySelector<HTMLTableSectionElement>("#fileTableBody");
+      if (tbody) removeFileRow(file.fileName);
+    } catch (err) {
+      console.error("Delete failed:", err);
+      alert("Delete failed. Check console.");
     }
   }
 
@@ -136,6 +132,17 @@ class FileService {
       const changes: SyncResponse = response.data;
       localStorage.setItem("lastSync", changes.lastSync);
 
+      const tbody =
+        document.querySelector<HTMLTableSectionElement>("#fileTableBody");
+      if (tbody) {
+        for (const added of changes.added || [])
+          this.addFileRowSafe(added, tbody);
+        for (const modified of changes.modified || [])
+          this.updateFileRowSafe(modified, tbody);
+        for (const removed of changes.removed || [])
+          removeFileRow(removed.fileName);
+      }
+
       return changes;
     } catch (err) {
       console.error("Sync failed:", err);
@@ -143,10 +150,24 @@ class FileService {
     }
   }
 
-  async fetchDownloadUrl(
-    fileId: string,
-    ownerId: string
-  ): Promise<{ downloadUrl: string }> {
+  private addFileRowSafe(file: FileItem, tbody: HTMLTableSectionElement) {
+    if (!this.currentFiles.find((f) => f.fileId === file.fileId)) {
+      this.addFile(file);
+      addFileRow(file, tbody);
+    }
+  }
+
+  private updateFileRowSafe(file: FileItem, tbody: HTMLTableSectionElement) {
+    const row = tbody.querySelector<HTMLTableRowElement>(
+      `tr[data-fileid="${CSS.escape(file.fileId)}"]`
+    );
+    if (row) {
+      this.updateFile(file);
+      updateFileRow(file, row);
+    } else this.addFileRowSafe(file, tbody);
+  }
+
+  async fetchDownloadUrl(fileId: string, ownerId: string) {
     try {
       const response = await axios.get(
         `http://localhost:3000/files/download-url/${fileId}?ownerId=${encodeURIComponent(

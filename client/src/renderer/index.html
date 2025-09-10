@@ -3,12 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <title>R/Drive</title>
+    <% if (htmlWebpackPlugin.options.isProd) { %>
     <meta
       http-equiv="Content-Security-Policy"
       content="
         default-src 'self' blob: data:;
         script-src 'self';
-        style-src 'self' 'unsafe-inline';
+        style-src 'self';
         img-src 'self' blob: data:;
         media-src 'self' blob: data:;
         connect-src 'self'
@@ -18,6 +19,19 @@
           https://file-sync-bucket-1312414151515.s3.us-east-1.amazonaws.com;
       "
     />
+    <% } else { %>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self' blob: data:;
+        script-src 'self' 'unsafe-eval' 'unsafe-inline';
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' blob: data:;
+        media-src 'self' blob: data:;
+        connect-src *;
+      "
+    />
+    <% } %>
   </head>
   <body class="bg-gray-100 min-h-screen p-6">
     <main class="w-full max-w-4xl mx-auto">
@@ -165,6 +179,12 @@
               class="bg-indigo-600 text-white px-3 py-2 rounded hover:bg-indigo-700 text-sm"
             >
               + Upload
+            </button>
+            <button
+              id="syncFolderBtn"
+              class="bg-indigo-600 text-white px-3 py-2 rounded hover:bg-indigo-700 text-sm"
+            >
+              Sync Folder
             </button>
           </div>
 

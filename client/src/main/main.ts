@@ -1,8 +1,10 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import * as path from "path";
 import { config } from "dotenv";
+import { startFolderWatcher } from "./folder-watcher";
 
 let mainWindow: BrowserWindow | null = null;
+let currentWatcher: ReturnType<typeof startFolderWatcher> | null = null;
 
 const envPath = path.resolve(__dirname, "../.env");
 const result = config({ path: envPath });
@@ -16,6 +18,21 @@ ipcMain.handle("get-env-vars", async () => {
     COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID,
     AWS_REGION: process.env.AWS_REGION,
   };
+});
+
+ipcMain.on("start-folder-sync", (event, { folderPath, userId }) => {
+  if (currentWatcher) {
+    currentWatcher.close();
+    currentWatcher = null;
+  }
+
+  currentWatcher = startFolderWatcher({ folderPath, userId });
+});
+
+ipcMain.handle("select-folder", async () => {
+  return dialog.showOpenDialog({
+    properties: ["openDirectory"],
+  });
 });
 
 function createWindow() {

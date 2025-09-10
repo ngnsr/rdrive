@@ -11,5 +11,13 @@ declare global {
     };
     currentUser: { loginId: string } | null;
     setCurrentUser: (user: { loginId: string } | null) => void;
+    electronApi: {
+      selectFolder: () => Promise<{ canceled: boolean; filePaths: string[] }>;
+      startFolderSync: (folderPath: string, userId: string) => void;
+    };
+    electronFs?: {
+      readFile: (path: string) => Buffer;
+      writeFile: (path: string, data: any) => void;
+    };
   }
 }
