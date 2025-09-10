@@ -35,6 +35,7 @@ const showSignInFromConfirm = document.getElementById("showSignInFromConfirm");
 const logoutBtn = document.getElementById("logoutBtn");
 const refreshBtn = document.getElementById("refreshButton");
 const closeBtn = document.getElementById("closePreview");
+const syncFolderBtn = document.getElementById("syncFolderBtn");
 
 // ---------------- UI HELPERS ----------------
 async function showAuthorizedUI(user: { loginId: string }) {
@@ -222,6 +223,22 @@ addListenerOnce(document.body, "keydown", (e) => {
   if ((e as KeyboardEvent).key === "Escape") {
     modal?.classList.add("hidden");
   }
+});
+
+async function selectFolderAndStartSync(userId: string) {
+  const result = await window.electronApi.selectFolder();
+  if (result.canceled || !result.filePaths.length) return;
+
+  const folderPath = result.filePaths[0];
+  console.log("Selected folder:", folderPath);
+
+  window.electronApi.startFolderSync(folderPath, userId);
+}
+
+addListenerOnce(syncFolderBtn, "click", () => {
+  const user = window.currentUser;
+  if (!user) return;
+  selectFolderAndStartSync(user.loginId);
 });
 
 // ---------------- INIT ----------------

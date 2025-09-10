@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import { register, login, logout, getUser, confirm } from "./auth/auth";
 import "./auth/amplify-config";
 import { configureAmplify } from "./auth/amplify-config";
+import fs from "fs";
 
 interface AuthAPI {
   register: (email: string, password: string, name: string) => Promise<any>;
@@ -79,6 +80,15 @@ async function initialize() {
         }
       },
     } as AuthAPI);
+    contextBridge.exposeInMainWorld("electronFs", {
+      readFile: (path: string) => fs.readFileSync(path),
+      writeFile: (path: string, data: any) => fs.writeFileSync(path, data),
+    });
+    contextBridge.exposeInMainWorld("electronApi", {
+      selectFolder: async () => ipcRenderer.invoke("select-folder"),
+      startFolderSync: (folderPath: string, userId: string) =>
+        ipcRenderer.send("start-folder-sync", { folderPath, userId }),
+    });
   } catch (err) {
     console.error("Preload initialization failed:", err);
     throw err;
