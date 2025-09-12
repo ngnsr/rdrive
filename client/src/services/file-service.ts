@@ -3,14 +3,17 @@ import { computeFileHash } from "../utils/file-utils";
 import { FileItem, ServerFile, SyncResponse } from "../types";
 import { addFileRow, removeFileRow, updateFileRow } from "../utils/table-utils";
 
+const API_BASE_URL = window.env.API_BASE_URL;
+
 class FileService {
   private currentFiles: FileItem[] = [];
   private filterType = "all";
+  private baseUrl = API_BASE_URL;
 
   async fetchFiles(ownerId: string): Promise<void> {
     try {
       const response = await axios.get(
-        `http://localhost:3000/files?ownerId=${encodeURIComponent(ownerId)}`
+        `${this.baseUrl}/files?ownerId=${encodeURIComponent(ownerId)}`
       );
 
       this.currentFiles = response.data.map((file: ServerFile) => ({
@@ -64,7 +67,7 @@ class FileService {
       };
 
       const response = await axios.post(
-        "http://localhost:3000/files/upload-url",
+        `${this.baseUrl}/files/upload-url`,
         fileObj
       );
       const { uploadUrl, fileId } = response.data;
@@ -73,7 +76,7 @@ class FileService {
         headers: { "Content-Type": file.type },
       });
 
-      await axios.post("http://localhost:3000/files/mark-uploaded", {
+      await axios.post(`${this.baseUrl}/files/mark-uploaded`, {
         ownerId,
         fileId,
       });
@@ -107,7 +110,7 @@ class FileService {
 
     try {
       await axios.delete(
-        `http://localhost:3000/files/delete/${fileId}?ownerId=${encodeURIComponent(
+        `${this.baseUrl}/files/delete/${fileId}?ownerId=${encodeURIComponent(
           ownerId
         )}`
       );
@@ -126,7 +129,7 @@ class FileService {
     try {
       const lastSync = localStorage.getItem("lastSync") || null;
       const response = await axios.get(
-        `http://localhost:3000/sync/changes?ownerId=${ownerId}&since=${lastSync}`
+        `${this.baseUrl}/sync/changes?ownerId=${ownerId}&since=${lastSync}`
       );
 
       const changes: SyncResponse = response.data;
@@ -170,9 +173,9 @@ class FileService {
   async fetchDownloadUrl(fileId: string, ownerId: string) {
     try {
       const response = await axios.get(
-        `http://localhost:3000/files/download-url/${fileId}?ownerId=${encodeURIComponent(
-          ownerId
-        )}`
+        `${
+          this.baseUrl
+        }/files/download-url/${fileId}?ownerId=${encodeURIComponent(ownerId)}`
       );
       return response.data;
     } catch (err) {

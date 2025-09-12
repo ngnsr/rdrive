@@ -19,5 +19,8 @@ declare global {
       readFile: (path: string) => Buffer;
       writeFile: (path: string, data: any) => void;
     };
+    env: {
+      API_BASE_URL: string;
+    };
   }
 }

@@ -22,6 +22,7 @@ async function initialize() {
     process.env.COGNITO_USER_POOL_ID = env.COGNITO_USER_POOL_ID;
     process.env.COGNITO_CLIENT_ID = env.COGNITO_CLIENT_ID;
     process.env.AWS_REGION = env.AWS_REGION || "us-east-1";
+    process.env.API_BASE_URL = env.API_BASE_URL || "http://localhost:3000";
 
     // Validate environment variables
     if (!process.env.COGNITO_USER_POOL_ID || !process.env.COGNITO_CLIENT_ID) {
@@ -88,6 +89,9 @@ async function initialize() {
       selectFolder: async () => ipcRenderer.invoke("select-folder"),
       startFolderSync: (folderPath: string, userId: string) =>
         ipcRenderer.send("start-folder-sync", { folderPath, userId }),
+    });
+    contextBridge.exposeInMainWorld("env", {
+      API_BASE_URL: process.env.API_BASE_URL,
     });
   } catch (err) {
     console.error("Preload initialization failed:", err);

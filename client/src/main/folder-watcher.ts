@@ -26,6 +26,7 @@ export function startFolderWatcher({ folderPath, userId }: WatcherOptions) {
 
   const uploadFileNode = async (filePath: string) => {
     const fileName = path.basename(filePath);
+    const baseUrl = process.env.API_BASE_URL;
 
     try {
       console.log(`[Watcher] Detected change/add: ${fileName}, uploading...`);
@@ -51,7 +52,7 @@ export function startFolderWatcher({ folderPath, userId }: WatcherOptions) {
 
       // Step 1: Get signed S3 URL
       const { uploadUrl, fileId } = (
-        await axios.post("http://localhost:3000/files/upload-url", fileObj)
+        await axios.post(`${baseUrl}/files/upload-url`, fileObj)
       ).data;
 
       // Step 2: Upload to S3
@@ -60,7 +61,7 @@ export function startFolderWatcher({ folderPath, userId }: WatcherOptions) {
       });
 
       // Step 3: Mark uploaded
-      await axios.post("http://localhost:3000/files/mark-uploaded", {
+      await axios.post(`${baseUrl}/files/mark-uploaded`, {
         ownerId: userId,
         fileId,
       });

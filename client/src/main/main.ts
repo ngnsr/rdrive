@@ -7,13 +7,14 @@ let mainWindow: BrowserWindow | null = null;
 let currentWatcher: ReturnType<typeof startFolderWatcher> | null = null;
 
 const envPath = path.resolve(__dirname, "../.env");
-const result = config({ path: envPath });
-if (result.error) {
-  console.error("Failed to load .env file:", result.error);
+const env = config({ path: envPath });
+if (env.error) {
+  console.error("Failed to load .env file:", env.error);
 }
 
 ipcMain.handle("get-env-vars", async () => {
   return {
+    API_BASE_URL: process.env.API_BASE_URL,
     COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID,
     COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID,
     AWS_REGION: process.env.AWS_REGION,
