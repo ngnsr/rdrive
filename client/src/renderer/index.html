@@ -13,7 +13,7 @@
         img-src 'self' blob: data:;
         media-src 'self' blob: data:;
         connect-src 'self'
-          http://localhost:3000
+          http://localhost:4001
           https://cognito-idp.eu-north-1.amazonaws.com
           https://*.amazoncognito.com
           https://file-sync-bucket-1312414151515.s3.us-east-1.amazonaws.com;
@@ -24,7 +24,7 @@
       http-equiv="Content-Security-Policy"
       content="
         default-src 'self' blob: data:;
-        script-src 'self' 'unsafe-eval' 'unsafe-inline';
+        script-src 'self' 'unsafe-inline';
         style-src 'self' 'unsafe-inline';
         img-src 'self' blob: data:;
         media-src 'self' blob: data:;
@@ -173,19 +173,26 @@
             >
               Refresh
             </button>
-            <input type="file" id="fileInput" class="hidden" />
             <button
               id="uploadButton"
               class="bg-indigo-600 text-white px-3 py-2 rounded hover:bg-indigo-700 text-sm"
             >
               + Upload
             </button>
-            <button
-              id="syncFolderBtn"
-              class="bg-indigo-600 text-white px-3 py-2 rounded hover:bg-indigo-700 text-sm"
-            >
-              Sync Folder
-            </button>
+            <div class="flex items-center space-x-3">
+              <button
+                id="syncFolderBtn"
+                class="bg-indigo-600 text-white px-3 py-2 rounded hover:bg-indigo-700 text-sm"
+              >
+                Sync Folder
+              </button>
+              <span
+                id="syncFolderPath"
+                class="text-gray-700 text-sm truncate max-w-xs"
+              >
+                No folder selected
+              </span>
+            </div>
           </div>
 
           <div class="relative">

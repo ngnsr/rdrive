@@ -25,4 +25,11 @@ module.exports = merge(common, {
       template: "./src/renderer/index.html",
     }),
   ],
+  resolve: {
+    fallback: {
+      crypto: false,
+      stream: false,
+      uuid: false,
+    },
+  },
 });

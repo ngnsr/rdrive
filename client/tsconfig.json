@@ -11,7 +11,7 @@
   },
   "include": [
     "src",
-    "webpack.main.ts",
+    "webpack.main.js",
     "webpack.common.js",
     "webpack.renderer.js"
   ],

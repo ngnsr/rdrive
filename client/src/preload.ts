@@ -1,102 +1,95 @@
-import { contextBridge, ipcRenderer } from "electron";
-import { register, login, logout, getUser, confirm } from "./auth/auth";
-import "./auth/amplify-config";
+import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 import { configureAmplify } from "./auth/amplify-config";
-import fs from "fs";
+import Store from "electron-store";
+import * as auth from "./auth/auth";
+import path from "path";
 
-interface AuthAPI {
-  register: (email: string, password: string, name: string) => Promise<any>;
-  login: (email: string, password: string) => Promise<any>;
-  logout: () => Promise<void>;
-  getUser: () => Promise<any>;
-  confirm: () => Promise<any>;
-}
+const store = new Store();
 
-// Initialize and expose APIs
-async function initialize() {
+async function initializePreload() {
   try {
-    // Load environment variables via IPC
     const env = await ipcRenderer.invoke("get-env-vars");
 
-    // Set process.env for Amplify configuration
     process.env.COGNITO_USER_POOL_ID = env.COGNITO_USER_POOL_ID;
     process.env.COGNITO_CLIENT_ID = env.COGNITO_CLIENT_ID;
     process.env.AWS_REGION = env.AWS_REGION || "us-east-1";
-    process.env.API_BASE_URL = env.API_BASE_URL || "http://localhost:3000";
 
-    // Validate environment variables
     if (!process.env.COGNITO_USER_POOL_ID || !process.env.COGNITO_CLIENT_ID) {
-      console.error("Preload: Missing required environment variables:", {
-        userPoolId: !!process.env.COGNITO_USER_POOL_ID,
-        clientId: !!process.env.COGNITO_CLIENT_ID,
-      });
       throw new Error("Missing COGNITO_USER_POOL_ID or COGNITO_CLIENT_ID");
     }
+
     configureAmplify(process.env);
 
-    // Expose auth functions from auth.ts
+    // Expose auth functions to renderer
     contextBridge.exposeInMainWorld("Auth", {
-      register: async (email: string, password: string, name: string) => {
-        try {
-          const result = await register(email, password, name);
-          return result;
-        } catch (err) {
-          console.error("Preload: Register error:", err);
-          throw err;
-        }
-      },
-      login: async (email: string, password: string) => {
-        try {
-          const result = await login(email, password);
-          return result;
-        } catch (err) {
-          console.error("Preload: Login error:", err);
-          throw err;
-        }
-      },
-      logout: async () => {
-        try {
-          await logout();
-        } catch (err) {
-          console.error("Preload: Logout error:", err);
-          throw err;
-        }
-      },
-      getUser: async () => {
-        try {
-          const user = await getUser();
-          return user;
-        } catch (err) {
-          console.error("Preload: Get user error:", err);
-          throw err;
-        }
-      },
-      confirm: async (email: string, code: string) => {
-        try {
-          const result = await confirm(email, code);
-          return result;
-        } catch (err) {
-          console.error("Preload: Confirmation error:", err);
-          throw err;
-        }
-      },
-    } as AuthAPI);
-    contextBridge.exposeInMainWorld("electronFs", {
-      readFile: (path: string) => fs.readFileSync(path),
-      writeFile: (path: string, data: any) => fs.writeFileSync(path, data),
+      register: auth.register,
+      login: auth.login,
+      logout: auth.logout,
+      getUser: auth.getUser,
+      confirm: auth.confirm,
     });
+
+    // Expose env API
+    contextBridge.exposeInMainWorld("env", {
+      getApiBaseUrl: async () => {
+        return await ipcRenderer.invoke("get-api-base-url");
+      },
+    });
+
+    contextBridge.exposeInMainWorld("electronStore", {
+      get: (key: string) => store.get(key),
+      set: (key: string, value: any) => store.set(key, value),
+      delete: (key: string) => store.delete(key),
+      clear: () => store.clear(),
+    });
+
     contextBridge.exposeInMainWorld("electronApi", {
       selectFolder: async () => ipcRenderer.invoke("select-folder"),
+      selectFile: async () => ipcRenderer.invoke("select-file"),
       startFolderSync: (folderPath: string, userId: string) =>
         ipcRenderer.send("start-folder-sync", { folderPath, userId }),
+      onFileDeleted: (
+        callback: (
+          event: any,
+          args: { fileName: string; ownerId: string; askConfirm?: boolean }
+        ) => void
+      ) => {
+        ipcRenderer.on("file-deleted", callback);
+      },
+      onFileUploaded: (
+        callback: (
+          event: any,
+          args: {
+            fileName: string;
+            ownerId: string;
+            filePath: string;
+          }
+        ) => void
+      ) => {
+        ipcRenderer.on("file-uploaded", callback);
+      },
+      copyToSyncFolder: (filePath: string, syncFolder: string) =>
+        ipcRenderer.invoke("copy-to-sync-folder", {
+          filePath,
+          syncFolder,
+        }),
     });
-    contextBridge.exposeInMainWorld("env", {
-      API_BASE_URL: process.env.API_BASE_URL,
+
+    contextBridge.exposeInMainWorld("fsApi", {
+      exists: async (filePath: string) =>
+        ipcRenderer.invoke("fs-exists", filePath),
+      joinPath: (...segments: string[]) => path.join(...segments),
+      basename: (filePath: string) => path.basename(filePath),
+      normalizePath: (p: string) => path.normalize(p),
+      readFile: (filePath: string) =>
+        ipcRenderer.invoke("fs-readFile", filePath),
+      deleteFile: async (filePath: string) =>
+        ipcRenderer.invoke("fs-unlink", filePath),
+      getFilePath: (file: File) => file.path,
     });
   } catch (err) {
     console.error("Preload initialization failed:", err);
-    throw err;
   }
 }
 
-initialize();
+initializePreload();

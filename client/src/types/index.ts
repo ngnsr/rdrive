@@ -25,4 +25,12 @@ export type SyncResponse = {
   lastSync: string;
 };
 
+interface FileInfo {
+  name: string;
+  path: string;
+  size: number;
+  type: string;
+  lastModified: number;
+}
+
 export type User = { loginId: string } | null;

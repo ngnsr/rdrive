@@ -16,7 +16,7 @@ export class SyncService {
 
   async getChangesSince(ownerId: string, since: Date) {
     const queryCommand = new QueryCommand({
-      TableName: process.env.DYNAMO_TABLE!,
+      TableName: this.table,
       KeyConditionExpression: 'ownerId = :ownerId',
       ExpressionAttributeValues: {
         ':ownerId': { S: ownerId },
