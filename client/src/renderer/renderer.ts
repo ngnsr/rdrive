@@ -1,7 +1,7 @@
 import { Mime } from "mime";
 import fileService from "../services/file-service";
 import { fetchFilesAndRenderTable } from "../utils/render-table";
-import { addListenerOnce } from "../utils/table-utils";
+import { addListenerOnce, setColumnVisibility } from "../utils/table-utils";
 import "./styles.css";
 
 // Initialize
@@ -38,6 +38,8 @@ const userEmail = document.getElementById("userEmail");
 const userInfo = document.getElementById("userInfo");
 const controls = document.getElementById("controls");
 const appDiv = document.getElementById("app");
+const columnMenu = document.getElementById("columnMenu");
+const storageKey = "rdrive.visibleCols";
 
 const modal = document.getElementById("previewModal");
 
@@ -51,6 +53,9 @@ const showSignInFromConfirm = document.getElementById("showSignInFromConfirm");
 const logoutBtn = document.getElementById("logoutBtn");
 const refreshBtn = document.getElementById("refreshButton");
 const closeBtn = document.getElementById("closePreview");
+const columnMenuBtn = document.getElementById(
+  "columnMenuBtn"
+) as HTMLButtonElement;
 const syncFolderBtn = document.getElementById("syncFolderBtn");
 const syncFolderDisplay = document.getElementById("syncFolderPath");
 
@@ -326,6 +331,39 @@ addListenerOnce(syncFolderBtn, "click", () => {
   if (!user) return;
   selectFolderAndStartSync(user.loginId);
 });
+
+if (columnMenuBtn && columnMenu) {
+  // Restore column states
+  const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
+  document.querySelectorAll<HTMLInputElement>(".col-toggle").forEach((cb) => {
+    const col = cb.dataset.col!;
+    const isVisible = saved.hasOwnProperty(col) ? saved[col] : true;
+    cb.checked = isVisible;
+    setColumnVisibility(col, isVisible);
+
+    cb.addEventListener("change", () => {
+      setColumnVisibility(col, cb.checked);
+      saved[col] = cb.checked;
+      localStorage.setItem(storageKey, JSON.stringify(saved));
+    });
+  });
+
+  // Toggle menu
+  columnMenuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    columnMenu.classList.toggle("hidden");
+  });
+
+  // Close when clicking outside
+  document.addEventListener("click", (e) => {
+    if (
+      !columnMenu.contains(e.target as Node) &&
+      !columnMenuBtn.contains(e.target as Node)
+    ) {
+      columnMenu.classList.add("hidden");
+    }
+  });
+}
 
 // ---------------- INIT ----------------
 if (document.readyState === "loading") {

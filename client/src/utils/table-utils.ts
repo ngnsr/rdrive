@@ -11,48 +11,70 @@ export function addFileRow(file: FileItem, tbody: HTMLElement) {
 
   // Use existing HTML headers; just fill cells
   newRow.innerHTML = `
-    <td class="border border-gray-300 px-8 py-4">${file.fileName}</td>
-    <td class="border border-gray-300 px-8 py-4">${formatSize(file.size)}</td>
-    <td class="border border-gray-300 px-8 py-4">${new Date(
-      file.createdAt
-    ).toLocaleDateString()}</td>
-    <td class="border border-gray-300 px-8 py-4">${new Date(
-      file.modifiedAt
-    ).toLocaleDateString()}</td>
-    <td class="border border-gray-300 px-8 py-4">
-      <button class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2">
-        Preview
-      </button>
-      <button class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-        Delete
-      </button>
-    </td>
-  `;
+  <td data-col="fileName" class="border border-gray-300 px-8 py-4">${
+    file.fileName
+  }</td>
+  <td data-col="size" class="border border-gray-300 px-8 py-4">${formatSize(
+    file.size
+  )}</td>
+  <td data-col="createdAt" class="border border-gray-300 px-8 py-4">${new Date(
+    file.createdAt
+  ).toLocaleDateString()}</td>
+  <td data-col="modifiedAt" class="border border-gray-300 px-8 py-4">${new Date(
+    file.modifiedAt
+  ).toLocaleDateString()}</td>
+  <td data-col="createdBy" class="border border-gray-300 px-8 py-4">${
+    file.createdBy || "—"
+  }</td>
+  <td data-col="modifiedBy" class="border border-gray-300 px-8 py-4 ${
+    file.modifiedBy ? "" : "hidden"
+  }">${file.modifiedBy || "—"}</td>
+  <td data-col="actions" class="border border-gray-300 px-8 py-4">
+    <button class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2">
+      Preview
+    </button>
+    <button class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+      Delete
+    </button>
+  </td>
+`;
 
   tbody.appendChild(newRow);
   wireRowEvents(newRow, file);
+  applyColumnVisibility(newRow);
 }
 
 export function updateFileRow(file: FileItem, row: HTMLElement) {
   row.innerHTML = `
-    <td class="border border-gray-300 px-8 py-4">${file.fileName}</td>
-    <td class="border border-gray-300 px-8 py-4">${formatSize(file.size)}</td>
-    <td class="border border-gray-300 px-8 py-4">${new Date(
-      file.createdAt
-    ).toLocaleDateString()}</td>
-    <td class="border border-gray-300 px-8 py-4">${new Date(
-      file.modifiedAt
-    ).toLocaleDateString()}</td>
-    <td class="border border-gray-300 px-8 py-4">
-      <button class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2">
-        Preview
-      </button>
-      <button class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-        Delete
-      </button>
-    </td>
-  `;
+  <td data-col="fileName" class="border border-gray-300 px-8 py-4">${
+    file.fileName
+  }</td>
+  <td data-col="size" class="border border-gray-300 px-8 py-4">${formatSize(
+    file.size
+  )}</td>
+  <td data-col="createdAt" class="border border-gray-300 px-8 py-4">${new Date(
+    file.createdAt
+  ).toLocaleDateString()}</td>
+  <td data-col="modifiedAt" class="border border-gray-300 px-8 py-4">${new Date(
+    file.modifiedAt
+  ).toLocaleDateString()}</td>
+  <td data-col="createdBy" class="border border-gray-300 px-8 py-4">${
+    file.createdBy || "—"
+  }</td>
+  <td data-col="modifiedBy" class="border border-gray-300 px-8 py-4 ${
+    file.modifiedBy ? "" : "hidden"
+  }">${file.modifiedBy || "—"}</td>
+  <td data-col="actions" class="border border-gray-300 px-8 py-4">
+    <button class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2">
+      Preview
+    </button>
+    <button class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+      Delete
+    </button>
+  </td>
+`;
   wireRowEvents(row, file);
+  applyColumnVisibility(row);
 }
 
 function wireRowEvents(row: HTMLElement, file: FileItem) {
@@ -108,4 +130,21 @@ function formatSize(bytes: number): string {
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
+}
+
+export function setColumnVisibility(col: string, visible: boolean) {
+  document
+    .querySelectorAll<HTMLElement>(`[data-col="${col}"]`)
+    .forEach((el) => {
+      el.classList.toggle("hidden", !visible);
+    });
+}
+
+export function applyColumnVisibility(row: HTMLElement) {
+  const saved = JSON.parse(localStorage.getItem("rdrive.visibleCols") || "{}");
+  Object.entries(saved).forEach(([col, visible]) => {
+    row
+      .querySelectorAll<HTMLElement>(`[data-col="${col}"]`)
+      .forEach((td) => td.classList.toggle("hidden", !visible));
+  });
 }

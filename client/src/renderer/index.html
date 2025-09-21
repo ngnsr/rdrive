@@ -32,6 +32,7 @@
       "
     />
     <% } %>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
   </head>
   <body class="bg-gray-100 min-h-screen p-6">
     <main class="w-full max-w-4xl mx-auto">
@@ -53,9 +54,8 @@
               <label
                 for="loginEmail"
                 class="block text-sm font-medium text-gray-600"
+                >Email</label
               >
-                Email
-              </label>
               <input
                 id="loginEmail"
                 type="email"
@@ -67,9 +67,8 @@
               <label
                 for="loginPassword"
                 class="block text-sm font-medium text-gray-600"
+                >Password</label
               >
-                Password
-              </label>
               <input
                 id="loginPassword"
                 type="password"
@@ -99,9 +98,8 @@
               <label
                 for="signupName"
                 class="block text-sm font-medium text-gray-600"
+                >Name</label
               >
-                Name
-              </label>
               <input
                 id="signupName"
                 type="text"
@@ -113,9 +111,8 @@
               <label
                 for="signupEmail"
                 class="block text-sm font-medium text-gray-600"
+                >Email</label
               >
-                Email
-              </label>
               <input
                 id="signupEmail"
                 type="email"
@@ -127,9 +124,8 @@
               <label
                 for="signupPassword"
                 class="block text-sm font-medium text-gray-600"
+                >Password</label
               >
-                Password
-              </label>
               <input
                 id="signupPassword"
                 type="password"
@@ -189,9 +185,81 @@
               <span
                 id="syncFolderPath"
                 class="text-gray-700 text-sm truncate max-w-xs"
+                >No folder selected</span
               >
-                No folder selected
-              </span>
+            </div>
+
+            <div class="relative inline-block">
+              <!-- Column settings button -->
+              <button
+                id="columnMenuBtn"
+                class="bg-gray-200 px-2 py-1 rounded hover:bg-gray-300 text-sm"
+                title="Edit Columns"
+              >
+                ✏️
+              </button>
+
+              <!-- Column menu (hidden by default) -->
+              <div
+                id="columnMenu"
+                class="hidden absolute mt-2 right-0 bg-white rounded shadow-lg border p-3 text-sm z-50 w-56"
+              >
+                <div class="font-semibold mb-2">Toggle Columns</div>
+                <label class="block"
+                  ><input
+                    type="checkbox"
+                    class="col-toggle"
+                    data-col="fileName"
+                    checked
+                  />
+                  <span class="ml-2">Name</span></label
+                >
+                <label class="block"
+                  ><input
+                    type="checkbox"
+                    class="col-toggle"
+                    data-col="size"
+                    checked
+                  />
+                  <span class="ml-2">Size</span></label
+                >
+                <label class="block"
+                  ><input
+                    type="checkbox"
+                    class="col-toggle"
+                    data-col="createdAt"
+                    checked
+                  />
+                  <span class="ml-2">Created</span></label
+                >
+                <label class="block"
+                  ><input
+                    type="checkbox"
+                    class="col-toggle"
+                    data-col="modifiedAt"
+                    checked
+                  />
+                  <span class="ml-2">Modified</span></label
+                >
+                <label class="block"
+                  ><input
+                    type="checkbox"
+                    class="col-toggle"
+                    data-col="createdBy"
+                    checked
+                  />
+                  <span class="ml-2">Created by</span></label
+                >
+                <label class="block"
+                  ><input
+                    type="checkbox"
+                    class="col-toggle"
+                    data-col="modifiedBy"
+                    checked
+                  />
+                  <span class="ml-2">Modified by</span></label
+                >
+              </div>
             </div>
           </div>
 
@@ -259,27 +327,43 @@
                 <tr>
                   <th
                     data-sort="fileName"
+                    data-col="fileName"
                     class="sortable px-6 py-3 cursor-pointer relative"
                   >
                     Name <span class="sort-arrow absolute right-2"></span>
                   </th>
                   <th
                     data-sort="size"
+                    data-col="size"
                     class="sortable px-6 py-3 cursor-pointer relative"
                   >
                     Size <span class="sort-arrow absolute right-2"></span>
                   </th>
                   <th
                     data-sort="createdAt"
+                    data-col="createdAt"
                     class="sortable px-6 py-3 cursor-pointer relative"
                   >
                     Created <span class="sort-arrow absolute right-2"></span>
                   </th>
                   <th
                     data-sort="modifiedAt"
+                    data-col="modifiedAt"
                     class="sortable px-6 py-3 cursor-pointer relative"
                   >
                     Modified <span class="sort-arrow absolute right-2"></span>
+                  </th>
+                  <th
+                    data-col="createdBy"
+                    class="sortable px-6 py-3 cursor-pointer relative"
+                  >
+                    Created by
+                  </th>
+                  <th
+                    data-col="modifiedBy"
+                    class="sortable px-6 py-3 cursor-pointer relative"
+                  >
+                    Modified by
                   </th>
                   <th class="px-6 py-3">Actions</th>
                 </tr>
