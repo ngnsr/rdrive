@@ -19,9 +19,18 @@ export type ServerFile = {
 };
 
 export type SyncResponse = {
-  download: { fileId: string; fileName: string }[];
-  delete: { fileId: string; fileName: string }[];
+  added: FileItem[];
+  modified: FileItem[];
+  removed: { fileId: string; fileName: string }[];
   lastSync: string;
 };
+
+interface FileInfo {
+  name: string;
+  path: string;
+  size: number;
+  type: string;
+  lastModified: number;
+}
 
 export type User = { loginId: string } | null;

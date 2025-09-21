@@ -75,7 +75,6 @@ function wireRowEvents(row: HTMLElement, file: FileItem) {
       row.remove();
     } catch (err) {
       console.error("Delete failed:", err);
-      alert("Failed to delete file.");
     }
   });
 }

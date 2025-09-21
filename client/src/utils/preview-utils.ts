@@ -68,8 +68,19 @@ export async function previewFile(
     document.getElementById("previewTitle")!.innerText = fileName;
   } catch (err) {
     console.error("Preview failed:", err);
-    alert("Failed to preview file.");
   }
+}
+
+function canPreview(fileName: string): boolean {
+  const lower = fileName.toLowerCase();
+  return (
+    lower.endsWith(".png") ||
+    lower.endsWith(".jpg") ||
+    lower.endsWith(".jpeg") ||
+    lower.endsWith(".txt") ||
+    lower.endsWith(".json") ||
+    lower.endsWith(".js")
+  );
 }
 
 // Helper to open cached content

@@ -16,7 +16,7 @@ export class SyncService {
 
   async getChangesSince(ownerId: string, since: Date) {
     const queryCommand = new QueryCommand({
-      TableName: process.env.DYNAMO_TABLE!,
+      TableName: this.table,
       KeyConditionExpression: 'ownerId = :ownerId',
       ExpressionAttributeValues: {
         ':ownerId': { S: ownerId },
@@ -38,11 +38,25 @@ export class SyncService {
     }));
 
     const sinceIso = since.toISOString();
-    const changed = files.filter((f) => f.modifiedAt > sinceIso);
+    const changedFiles = files.filter((f) => f.modifiedAt > sinceIso);
+
+    const added: FileMetadata[] = [];
+    const modified: FileMetadata[] = [];
+    const removed: FileMetadata[] = [];
+
+    for (const file of changedFiles) {
+      if (file.status === 'active') {
+        if (new Date(file.createdAt) >= since) added.push(file);
+        else modified.push(file);
+      } else if (file.status === 'deleted') {
+        removed.push(file);
+      }
+    }
 
     return {
-      download: changed.filter((f) => f.status === 'active'),
-      delete: changed.filter((f) => f.status === 'deleted'),
+      added,
+      modified,
+      removed,
       lastSync: new Date().toISOString(),
     };
   }

@@ -73,7 +73,7 @@ export async function fetchFilesAndRenderTable(user: User) {
 }
 
 // ---------------- HEADER SORT ----------------
-const headers = document.querySelectorAll<HTMLTableHeaderCellElement>(
+const headers = document.querySelectorAll<HTMLTableCellElement>(
   "#fileTable thead th[data-sort]"
 );
 
@@ -96,7 +96,7 @@ headers.forEach((th) => {
 });
 
 function updateSortIndicators() {
-  const headers = document.querySelectorAll<HTMLTableHeaderCellElement>(
+  const headers = document.querySelectorAll<HTMLTableCellElement>(
     "#fileTable thead th[data-sort]"
   );
 

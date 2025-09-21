@@ -1,3 +1,4 @@
+import { Mime } from "mime";
 import fileService from "../services/file-service";
 import { fetchFilesAndRenderTable } from "../utils/render-table";
 import { addListenerOnce } from "../utils/table-utils";
@@ -9,7 +10,23 @@ window.currentUser = null;
 // Helper to update current user globally
 window.setCurrentUser = (user: { loginId: string } | null) => {
   window.currentUser = user;
+  window.electronStore.set("currentUser", window.currentUser);
 };
+
+// Initialize API base URL
+async function initializeApp() {
+  try {
+    // Get API base URL from main process
+    const apiBaseUrl = window.env.getApiBaseUrl();
+    window.API_BASE_URL = apiBaseUrl;
+    await checkAuthState();
+    if (window.currentUser) {
+      await restoreCachedFolder(window.currentUser.loginId);
+    }
+  } catch (error) {
+    console.error("Failed to initialize app:", error);
+  }
+}
 
 // ---------------- DOM ELEMENTS ----------------
 const authContainer = document.getElementById("authContainer");
@@ -27,7 +44,6 @@ const modal = document.getElementById("previewModal");
 const uploadButton = document.getElementById(
   "uploadButton"
 ) as HTMLButtonElement;
-const fileInput = document.getElementById("fileInput") as HTMLInputElement; // hidden input
 
 const showSignUpBtn = document.getElementById("showSignUp");
 const showSignInBtn = document.getElementById("showSignIn");
@@ -35,6 +51,8 @@ const showSignInFromConfirm = document.getElementById("showSignInFromConfirm");
 const logoutBtn = document.getElementById("logoutBtn");
 const refreshBtn = document.getElementById("refreshButton");
 const closeBtn = document.getElementById("closePreview");
+const syncFolderBtn = document.getElementById("syncFolderBtn");
+const syncFolderDisplay = document.getElementById("syncFolderPath");
 
 // ---------------- UI HELPERS ----------------
 async function showAuthorizedUI(user: { loginId: string }) {
@@ -47,8 +65,6 @@ async function showAuthorizedUI(user: { loginId: string }) {
   if (userEmail) userEmail.innerText = user.loginId || "Unknown";
   appDiv?.classList.remove("hidden");
 
-  // // Wait to DOM to fully load
-  // await new Promise((resolve) => requestAnimationFrame(resolve));
   await fetchFilesAndRenderTable(user);
 }
 
@@ -75,7 +91,9 @@ function showUnauthorizedUI() {
 async function checkAuthState() {
   try {
     const user = await window.Auth.getUser();
-    await showAuthorizedUI({ loginId: user.signInDetails?.loginId });
+    await showAuthorizedUI({
+      loginId: user.signInDetails.loginId,
+    });
   } catch {
     showUnauthorizedUI();
   }
@@ -92,9 +110,10 @@ addListenerOnce(loginForm, "submit", async (e) => {
 
   try {
     await window.Auth.login(email, password);
-    showAuthorizedUI({ loginId: email });
+    await showAuthorizedUI({ loginId: email });
   } catch (err) {
     console.error("Login error:", err);
+    alert("Login failed");
   }
 });
 
@@ -114,8 +133,10 @@ addListenerOnce(signupForm, "submit", async (e) => {
     signupForm.classList.add("hidden");
     confirmForm.classList.remove("hidden");
     (document.getElementById("confirmEmail") as HTMLInputElement).value = email;
+    alert("Signup successful! Check your email for confirmation code.");
   } catch (err) {
     console.error("Signup error:", err);
+    alert("Signup failed");
   }
 });
 
@@ -131,8 +152,21 @@ addListenerOnce(confirmForm, "submit", async (e) => {
     await window.Auth.confirm(email, code);
     confirmForm.classList.add("hidden");
     loginForm.classList.remove("hidden");
+    alert("Account confirmed! Please login.");
   } catch (err) {
     console.error("Confirmation error:", err);
+    alert("Confirmation failed");
+  }
+});
+
+// ---------------- LOGOUT ----------------
+addListenerOnce(logoutBtn, "click", async () => {
+  try {
+    await window.Auth.logout();
+    showUnauthorizedUI();
+    alert("Logged out successfully");
+  } catch (err) {
+    console.error("Logout error:", err);
   }
 });
 
@@ -154,6 +188,7 @@ addListenerOnce(showSignInFromConfirm, "click", () => {
 addListenerOnce(logoutBtn, "click", async () => {
   try {
     await window.Auth.logout();
+    window.setCurrentUser(null);
     showUnauthorizedUI();
   } catch (err) {
     console.error("Logout error:", err);
@@ -165,7 +200,6 @@ addListenerOnce(refreshBtn, "click", async () => {
   const user = window.currentUser;
   if (!user) return;
   try {
-    // await fileService.syncFiles(user.loginId);
     await fetchFilesAndRenderTable(user);
   } catch (err) {
     console.error("Sync error:", err);
@@ -173,22 +207,27 @@ addListenerOnce(refreshBtn, "click", async () => {
 });
 
 // ---------------- UPLOAD FILE ----------------
-addListenerOnce(uploadButton, "click", () => {
-  fileInput?.click();
-});
-
-addListenerOnce(fileInput, "change", async () => {
-  const user = window.currentUser;
-  if (!fileInput.files?.length || !user) return;
-
-  const file = fileInput.files[0];
+addListenerOnce(uploadButton, "click", async () => {
   try {
-    await fileService.uploadFile(file, user.loginId);
-  } catch (err) {
-    console.error("Upload error:", err);
-    alert("Upload failed.");
-  } finally {
-    fileInput.value = ""; // reset so same file can be picked again
+    const user = window.currentUser;
+    if (!user) return;
+    const result = await window.electronApi.selectFile();
+    if (!result || result.canceled || !result.filePaths.length) return;
+    const filePath = result.filePaths[0];
+    const fileData = await window.fsApi.readFile(filePath);
+    const file = new File([fileData.buffer], fileData.name, {
+      type: fileData.type || "application/octet-stream",
+      lastModified: fileData.lastModified,
+    });
+    const syncFolder = window.electronStore.get(`syncFolder_${user.loginId}`);
+    const uploaded = await fileService.uploadFile(file, user.loginId, filePath);
+    if (uploaded) {
+      await window.electronApi.copyToSyncFolder(filePath, syncFolder);
+      // Refresh the file list after successful upload
+      await fetchFilesAndRenderTable(user);
+    }
+  } catch (error) {
+    console.error("File upload:", error);
   }
 });
 
@@ -198,11 +237,10 @@ const profileMenu = document.getElementById("profileMenu");
 
 if (profileBtn && profileMenu) {
   profileBtn.addEventListener("click", (e) => {
-    e.stopPropagation(); // prevent click from bubbling to body
+    e.stopPropagation();
     profileMenu.classList.toggle("hidden");
   });
 
-  // Close menu if clicking outside
   document.addEventListener("click", (e) => {
     if (
       !profileMenu.contains(e.target as Node) &&
@@ -224,5 +262,74 @@ addListenerOnce(document.body, "keydown", (e) => {
   }
 });
 
+// ---------------- FOLDER SYNC ----------------
+async function selectFolderAndStartSync(userId: string) {
+  try {
+    const result = await window.electronApi.selectFolder();
+    if (result.canceled || !result.filePaths.length) return;
+    const folderPath = result.filePaths[0];
+    window.electronStore.set(`syncFolder_${userId}`, folderPath);
+    if (syncFolderDisplay) syncFolderDisplay.innerText = folderPath;
+    window.electronApi.startFolderSync(folderPath, userId);
+  } catch (error) {
+    console.error("Folder sync error:", error);
+  }
+}
+
+async function restoreCachedFolder(userId: string) {
+  try {
+    const folderPath = window.electronStore.get(`syncFolder_${userId}`);
+    if (folderPath) {
+      console.log("Restoring cached folder:", folderPath);
+      if (syncFolderDisplay) syncFolderDisplay.innerText = folderPath;
+      window.electronApi.startFolderSync(folderPath, userId);
+    }
+  } catch (error) {
+    console.error("Failed to restore cached folder:", error);
+  }
+}
+
+window.electronApi.onFileDeleted(async (_event, { fileName, ownerId }) => {
+  const file = fileService.getFiles().find((f) => f.fileName === fileName);
+  if (!file) return;
+
+  await fileService.deleteFile(file.fileId, ownerId, true);
+});
+
+const IGNORED_FILES = [".DS_Store", "Thumbs.db", ".localized", ".gitkeep"];
+window.electronApi.onFileUploaded(
+  async (_event, { fileName, ownerId, filePath }) => {
+    console.log("Uploaded file:", fileName, "by", ownerId);
+    if (!filePath) return;
+
+    if (IGNORED_FILES.includes(fileName) || fileName.startsWith(".")) {
+      console.log("Ignoring file:", fileName);
+      return;
+    }
+    // Read file info from main thread
+    const fileData = await window.fsApi.readFile(filePath);
+
+    // Wrap buffer into a real File object
+    const file = new File([fileData.buffer], fileData.name, {
+      type: fileData.type || "application/octet-stream",
+      lastModified: fileData.lastModified,
+    });
+
+    // Now arrayBuffer() works, no .buffer access
+    await fileService.uploadFile(file, ownerId, filePath);
+  }
+);
+
+// ---------------- BUTTON CLICK ----------------
+addListenerOnce(syncFolderBtn, "click", () => {
+  const user = window.currentUser;
+  if (!user) return;
+  selectFolderAndStartSync(user.loginId);
+});
+
 // ---------------- INIT ----------------
-checkAuthState();
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeApp);
+} else {
+  initializeApp();
+}

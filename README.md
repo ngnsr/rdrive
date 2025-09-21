@@ -101,39 +101,38 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 
 ## Client (FileClient / Electron)
 
-- [ ] Implement **local folder monitoring** (fsevents on macOS, inotify on Linux, FSWatcher on Windows, let's go with macOs only)
-- [ ] Detect **local file changes** (create, modify, delete)
+- [x] Implement **local folder monitoring** (fsevents on macOS, inotify on Linux, FSWatcher on Windows, let's go with macOs only)
+- [x] Detect **local file changes** (create, modify, delete)
 - [ ] Implement **polling** for remote changes via SyncService
-- [ ] Handle **metadata responses** from SyncService:
+- [x] Handle **metadata responses** from SyncService:
   - [ ] Download new/updated files from S3 using presigned URL from FileService
   - [ ] Delete local files if removed remotely
-- [ ] Request **upload URLs** from FileService for local changes
-- [ ] Upload changed files to **S3** using presigned URL
-- [ ] Maintain **local metadata** for sync timestamps
-- [ ] Implement **file filtering & sorting** (by extension, modification time)
+- [x] Request **upload URLs** from FileService for local changes
+- [x] Upload changed files to **S3** using presigned URL
+- [x] Maintain **local metadata** for sync timestamps
+- [x] Implement **file filtering & sorting** (by extension, modification time)
 - [ ] UI: show **sync status**, last updated, errors
 
 ## Backend
 
 ### FileService
 
-- [ ] Implement endpoint to **generate presigned upload URL**
-- [ ] Implement endpoint to **generate presigned download URL**
-- [ ] Update file metadata in **DynamoDB** after upload
-- [ ] Validate user using **AWS Cognito/IAM**
+- [x] Implement endpoint to **generate presigned upload URL**
+- [x] Implement endpoint to **generate presigned download URL**
+- [x] Update file metadata in **DynamoDB** after upload
+- [x] Validate user using **AWS Cognito/IAM**
 - [ ] (Optional) logging for uploads/downloads
 
 ### SyncService
 
-- [ ] Endpoint to **return changed files** since a given timestamp (metadata only)
-- [ ] Track **new changes** in DynamoDB
-- [ ] Validate user using **AWS Cognito/IAM**
+- [x] Endpoint to **return changed files** since a given timestamp (metadata only)
+- [x] Track **new changes** in DynamoDB
+- [x] Validate user using **AWS Cognito/IAM**
 - [ ] Optional: rate-limiting for polling
 
 ### Infrastructure / AWS
 
-- [ ] **AWS S3** for file storage
-- [ ] **DynamoDB** for metadata (file name, hash, last modified, owner)
-- [ ] **Cognito / IAM** for authentication
-- [ ] **Load Balancer (ALB/NLB)** in front of FileService + SyncService
+- [x] **AWS S3** for file storage
+- [x] **DynamoDB** for metadata (file name, hash, last modified, owner)
+- [x] **Cognito / IAM** for authentication
 - [ ] Optional: CloudWatch for logging/monitoring
