@@ -30,15 +30,17 @@ export function addFileRow(file: FileItem, tbody: HTMLElement) {
     file.updatedUser ? "" : "hidden"
   }">${file.updatedUser || "—"}</td>
   <td data-col="actions" class="border border-gray-300 px-8 py-4">
-    <button class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2">
-      Preview
-    </button>
-    <button class="download-btn bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 mr-2">
-      Download
-    </button>
-    <button class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-      Delete
-    </button>
+    <div class="flex space-x-2">
+      <button class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+        Preview
+      </button>
+      <button class="download-btn bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
+        Download
+      </button>
+      <button class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+        Delete
+      </button>
+    </div>
   </td>
 `;
 
@@ -68,15 +70,17 @@ export function updateFileRow(file: FileItem, row: HTMLElement) {
     file.updatedUser ? "" : "hidden"
   }">${file.updatedUser || "—"}</td>
   <td data-col="actions" class="border border-gray-300 px-8 py-4">
-    <button class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2">
-      Preview
-    </button>
-    <button class="download-btn bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 mr-2">
-      Download
-    </button>
-    <button class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-      Delete
-    </button>
+    <div class="flex space-x-2">
+      <button class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+        Preview
+      </button>
+      <button class="download-btn bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
+        Download
+      </button>
+      <button class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+        Delete
+      </button>
+    </div>
   </td>
 `;
   wireRowEvents(row, file);
