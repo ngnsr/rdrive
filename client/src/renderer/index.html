@@ -147,6 +147,35 @@
               Back to Sign In
             </button>
           </form>
+
+        <!-- Confirm Form -->
+        <form id="confirmForm" class="hidden flex flex-col gap-2">
+          <input
+            id="confirmEmail"
+            type="email"
+            placeholder="Email"
+            class="border px-3 py-2 rounded"
+          />
+          <input
+            id="confirmCode"
+            type="text"
+            placeholder="Confirmation Code"
+            class="border px-3 py-2 rounded"
+          />
+          <button
+            type="submit"
+            class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+          >
+            Confirm
+          </button>
+          <button
+            type="button"
+            id="showSignInFromConfirm"
+            class="text-sm underline mt-1"
+          >
+            Back to Sign In
+          </button>
+        </form>
         </div>
       </section>
 
@@ -162,6 +191,7 @@
               <option value="all">All Files</option>
               <option value=".java">.java Files</option>
               <option value=".png">.png Files</option>
+              <option value=".jpg">.jpg Files</option>
             </select>
             <button
               id="refreshButton"
