@@ -1,6 +1,7 @@
 export interface FileItem {
   fileId: string;
   fileName: string;
+  mimeType: string;
   size: number;
   ownerId: string;
   hash?: string;
