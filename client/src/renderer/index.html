@@ -230,16 +230,16 @@
                     data-col="createdAt"
                     checked
                   />
-                  <span class="ml-2">Created</span></label
+                  <span class="ml-2">Created At</span></label
                 >
                 <label class="block"
                   ><input
                     type="checkbox"
                     class="col-toggle"
-                    data-col="modifiedAt"
+                    data-col="updatedAt"
                     checked
                   />
-                  <span class="ml-2">Modified</span></label
+                  <span class="ml-2">Updated At</span></label
                 >
                 <label class="block"
                   ><input
@@ -254,10 +254,10 @@
                   ><input
                     type="checkbox"
                     class="col-toggle"
-                    data-col="modifiedBy"
+                    data-col="updatedBy"
                     checked
                   />
-                  <span class="ml-2">Modified by</span></label
+                  <span class="ml-2">Updated by</span></label
                 >
               </div>
             </div>
@@ -318,7 +318,8 @@
 
         <!-- File Table -->
         <div id="app">
-          <div class="overflow-hidden rounded-lg shadow">
+          <!-- <div class="overflow-hidden rounded-lg shadow"> -->
+          <div class="overflow-x-auto rounded-lg shadow"></div>
             <table
               id="fileTable"
               class="table-auto w-full text-sm text-left border"
@@ -344,26 +345,26 @@
                     data-col="createdAt"
                     class="sortable px-6 py-3 cursor-pointer relative"
                   >
-                    Created <span class="sort-arrow absolute right-2"></span>
+                    Created At<span class="sort-arrow absolute right-2"></span>
                   </th>
                   <th
-                    data-sort="modifiedAt"
-                    data-col="modifiedAt"
+                    data-sort="updatedAt"
+                    data-col="updatedAt"
                     class="sortable px-6 py-3 cursor-pointer relative"
                   >
-                    Modified <span class="sort-arrow absolute right-2"></span>
+                    Updated At<span class="sort-arrow absolute right-2"></span>
                   </th>
                   <th
                     data-col="createdBy"
                     class="sortable px-6 py-3 cursor-pointer relative"
                   >
-                    Created by
+                    Created By
                   </th>
                   <th
-                    data-col="modifiedBy"
+                    data-col="updatedBy"
                     class="sortable px-6 py-3 cursor-pointer relative"
                   >
-                    Modified by
+                    Updated By
                   </th>
                   <th class="px-6 py-3">Actions</th>
                 </tr>
@@ -373,6 +374,7 @@
                 class="divide-y divide-gray-200"
               ></tbody>
             </table>
+          </div>
           </div>
         </div>
       </div>

@@ -20,15 +20,15 @@ export function addFileRow(file: FileItem, tbody: HTMLElement) {
   <td data-col="createdAt" class="border border-gray-300 px-8 py-4">${new Date(
     file.createdAt
   ).toLocaleDateString()}</td>
-  <td data-col="modifiedAt" class="border border-gray-300 px-8 py-4">${new Date(
-    file.modifiedAt
+  <td data-col="updatedAt" class="border border-gray-300 px-8 py-4">${new Date(
+    file.updatedAt
   ).toLocaleDateString()}</td>
   <td data-col="createdBy" class="border border-gray-300 px-8 py-4">${
-    file.createdBy || "—"
+    file.createdUser || "—"
   }</td>
-  <td data-col="modifiedBy" class="border border-gray-300 px-8 py-4 ${
-    file.modifiedBy ? "" : "hidden"
-  }">${file.modifiedBy || "—"}</td>
+  <td data-col="updatedBy" class="border border-gray-300 px-8 py-4 ${
+    file.updatedUser ? "" : "hidden"
+  }">${file.updatedUser || "—"}</td>
   <td data-col="actions" class="border border-gray-300 px-8 py-4">
     <button class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2">
       Preview
@@ -55,15 +55,15 @@ export function updateFileRow(file: FileItem, row: HTMLElement) {
   <td data-col="createdAt" class="border border-gray-300 px-8 py-4">${new Date(
     file.createdAt
   ).toLocaleDateString()}</td>
-  <td data-col="modifiedAt" class="border border-gray-300 px-8 py-4">${new Date(
-    file.modifiedAt
+  <td data-col="updatedAt" class="border border-gray-300 px-8 py-4">${new Date(
+    file.updatedAt
   ).toLocaleDateString()}</td>
   <td data-col="createdBy" class="border border-gray-300 px-8 py-4">${
-    file.createdBy || "—"
+    file.createdUser || "—"
   }</td>
-  <td data-col="modifiedBy" class="border border-gray-300 px-8 py-4 ${
-    file.modifiedBy ? "" : "hidden"
-  }">${file.modifiedBy || "—"}</td>
+  <td data-col="updatedBy" class="border border-gray-300 px-8 py-4 ${
+    file.updatedUser ? "" : "hidden"
+  }">${file.updatedUser || "—"}</td>
   <td data-col="actions" class="border border-gray-300 px-8 py-4">
     <button class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2">
       Preview

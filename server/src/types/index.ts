@@ -2,7 +2,9 @@ export interface FileMetadata {
   fileId: string;
   fileName: string;
   createdAt: string;
-  modifiedAt: string;
+  updatedAt: string;
+  createdUser?: string;
+  updatedUser?: string;
   size: number;
   mimeType: string;
   status: string;

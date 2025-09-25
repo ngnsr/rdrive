@@ -6,7 +6,7 @@ import {
   clearFileTable,
 } from "../utils/table-utils";
 
-let currentSort = { key: "modifiedAt", ascending: true };
+let currentSort = { key: "updatedAt", ascending: true };
 
 export interface SortState {
   key: string;
@@ -46,7 +46,7 @@ export async function renderFiles(files?: FileItem[]) {
       valB = Number(valB);
     } else if (
       currentSort.key === "createdAt" ||
-      currentSort.key === "modifiedAt"
+      currentSort.key === "updatedAt"
     ) {
       valA = new Date(valA).getTime();
       valB = new Date(valB).getTime();

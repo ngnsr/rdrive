@@ -6,7 +6,8 @@ import {
 } from '@nestjs/terminus';
 import pjson from '../../package.json';
 import { HealthService } from './health.service';
-import { JwtAuthGuard } from '../auth/auth.guard';
+import { CognitoAuthGuard } from '../auth/auth.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('health')
 export class HealthController {
@@ -22,7 +23,8 @@ export class HealthController {
   }
 
   @Get('protected')
-  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('cognitoAuth')
+  @UseGuards(CognitoAuthGuard)
   protectedPing(@Req() req: any) {
     return {
       message: 'pong',
@@ -30,6 +32,13 @@ export class HealthController {
       profile: req.user,
     };
   }
+
+  @Get('test')
+@UseGuards(CognitoAuthGuard)
+@ApiBearerAuth('cognitoAuth')
+test(@Req() req) {
+  return { user: req.user };
+}
 
   @Get('readiness')
   @HealthCheck()

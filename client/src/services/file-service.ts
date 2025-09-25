@@ -2,16 +2,14 @@ import axios from "axios";
 import { computeFileHash } from "../utils/file-utils";
 import { FileItem, ServerFile, SyncResponse } from "../types";
 import { addFileRow, removeFileRow, updateFileRow } from "../utils/table-utils";
-// import path from "path";
-
-const API_BASE_URL = "http://localhost:4001";
+import api from "../api/api";
 
 const getUploadedFilesKey = (userId: string) => `uploadedFiles_${userId}`;
 
 class FileService {
   private currentFiles: FileItem[] = [];
   private filterType = "all";
-  private baseUrl = API_BASE_URL;
+  private baseUrl = window.env.getApiBaseUrl();
   private store = window.electronStore;
 
   // Get the user's uploaded files hash map from store
@@ -34,14 +32,14 @@ class FileService {
   async fetchFiles(ownerId: string): Promise<void> {
     const now = Date.now();
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${this.baseUrl}/files?ownerId=${encodeURIComponent(ownerId)}`
       );
 
       this.currentFiles = response.data.map((file: ServerFile) => ({
         ...file,
         createdAt: new Date(file.createdAt).toISOString(),
-        modifiedAt: new Date(file.modifiedAt).toISOString(),
+        updatedAt: new Date(file.updatedAt).toISOString(),
       }));
 
       // Update last sync
@@ -95,12 +93,12 @@ class FileService {
         size: file.size,
         fileName: file.name,
         createdAt: now,
-        modifiedAt: now,
+        updatedAt: now,
         mimeType: file.type,
         hash: fileHash,
       };
 
-      const response = await axios.post(
+      const response = await api.post(
         `${this.baseUrl}/files/upload-url`,
         fileObj
       );
@@ -109,7 +107,7 @@ class FileService {
       await axios.put(uploadUrl, file, {
         headers: { "Content-Type": file.type },
       });
-      await axios.post(`${this.baseUrl}/files/mark-uploaded`, {
+      await api.post(`${this.baseUrl}/files/mark-uploaded`, {
         ownerId,
         fileId,
       });
@@ -150,7 +148,7 @@ class FileService {
 
     try {
       // Delete from backend
-      await axios.delete(
+      await api.delete(
         `${this.baseUrl}/files/delete/${fileId}?ownerId=${encodeURIComponent(
           ownerId
         )}`
@@ -203,7 +201,7 @@ class FileService {
   async syncFiles(ownerId: string): Promise<SyncResponse> {
     try {
       const lastSync = this.store.get(`lastSync_${ownerId}`) || null;
-      const response = await axios.get(
+      const response = await api.get(
         `${this.baseUrl}/sync/changes?ownerId=${ownerId}&since=${lastSync}`
       );
 
@@ -248,7 +246,7 @@ class FileService {
 
   async fetchDownloadUrl(fileId: string, ownerId: string) {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${
           this.baseUrl
         }/files/download-url/${fileId}?ownerId=${encodeURIComponent(ownerId)}`

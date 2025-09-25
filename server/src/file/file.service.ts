@@ -19,6 +19,7 @@ import { MarkUploadedDto } from './dto/mark-uploaded.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { FileStatus } from '../common/enums/file-status.enum';
 import { FileMetadata } from '../types';
+import { UserProfileDto } from 'src/common/dto/user-profile.dto';
 
 @Injectable()
 export class FileService {
@@ -35,10 +36,18 @@ export class FileService {
   }
 
   async getUploadUrl(dto: UploadFileDto) {
-    const { fileName, ownerId, size, mimeType, hash, createdAt, modifiedAt } =
-      dto;
+    const {
+      fileName,
+      ownerId,
+      size,
+      mimeType,
+      hash,
+      createdAt,
+      updatedAt,
+      createdUser,
+      updatedUser,
+    } = dto;
     const fileId = uuidv4();
-    const now = new Date().toISOString();
     const key = `${ownerId}/${fileId}/${fileName}`;
 
     // Generate presigned URL
@@ -56,10 +65,12 @@ export class FileService {
           ownerId: { S: ownerId },
           fileId: { S: fileId },
           fileName: { S: fileName },
+          createdUser: { S: createdUser },
+          updatedUser: { S: updatedUser },
           size: { N: size.toString() },
           mimeType: { S: mimeType },
           createdAt: { S: createdAt },
-          modifiedAt: { S: modifiedAt },
+          updatedAt: { S: updatedAt },
           status: { S: FileStatus.pending },
           hash: { S: hash },
         },
@@ -79,7 +90,7 @@ export class FileService {
           ownerId: { S: ownerId },
           fileId: { S: fileId },
         },
-        UpdateExpression: 'SET #status = :active, lastModified = :updatedAt',
+        UpdateExpression: 'SET #status = :active, updatedAt = :updatedAt',
         ExpressionAttributeNames: { '#status': 'status' },
         ExpressionAttributeValues: {
           ':active': { S: FileStatus.active },
@@ -114,7 +125,10 @@ export class FileService {
     return { fileId, downloadUrl };
   }
 
-  async getAllOwnerFiles(ownerId: string): Promise<FileMetadata[]> {
+  async getAllOwnerFiles(
+    ownerId: string,
+    user: UserProfileDto,
+  ): Promise<FileMetadata[]> {
     const scanCommand = new ScanCommand({
       TableName: this.table,
       FilterExpression: 'ownerId = :ownerId AND #status = :active',
@@ -131,10 +145,12 @@ export class FileService {
       fileId: item.fileId.S!,
       fileName: item.fileName.S!,
       createdAt: item.createdAt?.S || new Date().toISOString(),
-      modifiedAt: item.modifiedAt?.S || new Date().toISOString(),
+      updatedAt: item.updatedAt?.S || new Date().toISOString(),
       size: item.size ? parseInt(item.size.N!) : 0,
       mimeType: item.mimeType?.S || '',
       status: item.status.S!,
+      createdUser: user.name,
+      updatedUser: user.name,
       ownerId: item.ownerId.S!,
       hash: item.hash?.S || '',
     }));

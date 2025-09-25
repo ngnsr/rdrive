@@ -29,7 +29,7 @@ export class SyncService {
       fileId: item.fileId.S!,
       fileName: item.fileName.S!,
       createdAt: item.createdAt?.S || new Date().toISOString(),
-      modifiedAt: item.modifiedAt?.S || new Date().toISOString(),
+      updatedAt: item.updatedAt?.S || new Date().toISOString(),
       size: item.size ? parseInt(item.size.N!) : 0,
       mimeType: item.mimeType?.S || '',
       status: item.status.S!,
@@ -38,7 +38,7 @@ export class SyncService {
     }));
 
     const sinceIso = since.toISOString();
-    const changedFiles = files.filter((f) => f.modifiedAt > sinceIso);
+    const changedFiles = files.filter((f) => f.updatedAt > sinceIso);
 
     const added: FileMetadata[] = [];
     const modified: FileMetadata[] = [];

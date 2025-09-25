@@ -222,7 +222,7 @@ addListenerOnce(uploadButton, "click", async () => {
     const fileData = await window.fsApi.readFile(filePath);
     const file = new File([fileData.buffer], fileData.name, {
       type: fileData.type || "application/octet-stream",
-      lastModified: fileData.lastModified,
+      lastModified: fileData.updatedAt,
     });
     const syncFolder = window.electronStore.get(`syncFolder_${user.loginId}`);
     const uploaded = await fileService.uploadFile(file, user.loginId, filePath);

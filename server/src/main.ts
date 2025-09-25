@@ -8,15 +8,23 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Enable global validation pipe
-  app.useGlobalPipes(
-    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
-  );
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   // Setup Swagger
   const config = new DocumentBuilder()
     .setTitle('File Sync API')
     .setDescription('API for uploading, downloading, and syncing files')
     .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description:
+          'Paste your Cognito ID token here. Example: **eyJraWQiOi...**',
+      },
+      'cognitoAuth',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

@@ -13,6 +13,7 @@ async function initializePreload() {
     process.env.COGNITO_USER_POOL_ID = env.COGNITO_USER_POOL_ID;
     process.env.COGNITO_CLIENT_ID = env.COGNITO_CLIENT_ID;
     process.env.AWS_REGION = env.AWS_REGION || "us-east-1";
+    process.env.API_BASE_URL = env.API_BASE_URL || "http://localhost:4001";
 
     if (!process.env.COGNITO_USER_POOL_ID || !process.env.COGNITO_CLIENT_ID) {
       throw new Error("Missing COGNITO_USER_POOL_ID or COGNITO_CLIENT_ID");
@@ -31,8 +32,8 @@ async function initializePreload() {
 
     // Expose env API
     contextBridge.exposeInMainWorld("env", {
-      getApiBaseUrl: async () => {
-        return await ipcRenderer.invoke("get-api-base-url");
+      getApiBaseUrl: () => {
+        return process.env.API_BASE_URL || "http://localhost:4001";
       },
     });
 

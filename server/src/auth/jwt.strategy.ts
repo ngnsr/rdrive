@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import * as jwksRsa from 'jwks-rsa';
 import { ConfigService } from '@nestjs/config';
+import { UserProfileDto } from 'src/common/dto/user-profile.dto';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly configService: ConfigService) {
+export class CognitoAuthStrategy extends PassportStrategy(
+  Strategy,
+  'cognitoAuth',
+) {
+  constructor(configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKeyProvider: jwksRsa.passportJwtSecret({
@@ -25,6 +29,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    return { userId: payload.sub, username: payload['cognito:username'] };
+    if (!payload) {
+      throw new UnauthorizedException('Invalid token');
+    }
+    return new UserProfileDto(
+      payload.sub,
+      payload['cognito:username'],
+      payload.email,
+      payload.name,
+    );
   }
 }

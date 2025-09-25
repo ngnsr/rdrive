@@ -5,6 +5,8 @@ import { FileModule } from './file/file.module';
 import { SyncModule } from './sync/sync.module';
 import { AwsModule } from './aws/aws.module';
 import { HealthModule } from './health/health.module';
+import { PassportModule } from '@nestjs/passport';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { HealthModule } from './health/health.module';
     FileModule,
     SyncModule,
     HealthModule,
+    AuthModule,
+    PassportModule.register({ defaultStrategy: 'cognitoAuth' })
   ],
 })
 export class AppModule {}

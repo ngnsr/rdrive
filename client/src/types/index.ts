@@ -2,17 +2,21 @@ export interface FileItem {
   fileId: string;
   fileName: string;
   size: number;
-  createdAt: string | number;
-  modifiedAt: string | number;
   ownerId: string;
   hash?: string;
+  createdUser?: string;
+  updatedUser?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type ServerFile = {
   fileId: string;
   fileName: string;
   createdAt: string;
-  modifiedAt: string;
+  updatedAt: string;
+  createdUser?: string;
+  updatedUser?: string;
   mimeType: string;
   hash: string;
   size: number;
@@ -24,13 +28,5 @@ export type SyncResponse = {
   removed: { fileId: string; fileName: string }[];
   lastSync: string;
 };
-
-interface FileInfo {
-  name: string;
-  path: string;
-  size: number;
-  type: string;
-  lastModified: number;
-}
 
 export type User = { loginId: string } | null;

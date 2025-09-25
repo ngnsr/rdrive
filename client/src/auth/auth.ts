@@ -5,6 +5,7 @@ import {
   signOut,
   signUp,
   confirmSignUp,
+  fetchAuthSession,
 } from "@aws-amplify/auth";
 
 export async function register(email: string, password: string, name: string) {
@@ -28,7 +29,28 @@ export async function confirm(email: string, code: string) {
 }
 
 export async function login(email: string, password: string) {
-  return await signIn({ username: email, password });
+  // 1. Perform sign-in
+  const result = await signIn({ username: email, password });
+
+  if (!result.isSignedIn) {
+    throw new Error(
+      "Sign-in incomplete, next step required: " +
+        JSON.stringify(result.nextStep)
+    );
+  }
+
+  // 2. Fetch current session (contains tokens)
+  const session = await fetchAuthSession();
+
+  // 3. Extract tokens
+  const idToken = session.tokens?.idToken?.toString();
+
+  if (!idToken) throw new Error("No ID token found in session");
+
+  // 4. Save ID token for backend calls (Bearer auth)
+  localStorage.setItem("authToken", idToken);
+
+  return { idToken };
 }
 
 export async function logout() {
