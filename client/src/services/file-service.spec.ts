@@ -87,6 +87,66 @@ describe("FileService", () => {
     expect(FileService["filterType"]).toBe("txt");
   });
 
+  test("getFiles respects filterType", () => {
+    const ownerId = "owner-123";
+
+    // Reset state
+    FileService["currentFiles"] = [];
+    FileService.setFilterType("all");
+
+    const txtFile: FileItem = {
+      fileId: "file-1",
+      ownerId,
+      fileName: "document.txt",
+      size: 100,
+      mimeType: "text/plain",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      hash: "hash1",
+    };
+
+    const jpgFile: FileItem = {
+      fileId: "file-2",
+      ownerId,
+      fileName: "image.jpg",
+      size: 200,
+      mimeType: "image/jpeg",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      hash: "hash2",
+    };
+
+    // Add files
+    FileService.addFile(txtFile);
+    FileService.addFile(jpgFile);
+
+    // Default filterType is "all"
+    let files = FileService.getFiles();
+    expect(files).toHaveLength(2);
+
+    // Set filter to txt files
+    FileService.setFilterType("txt");
+    files = FileService.getFiles();
+    expect(files).toHaveLength(1);
+    expect(files[0].fileName).toBe("document.txt");
+
+    // Set filter to jpg files
+    FileService.setFilterType("jpg");
+    files = FileService.getFiles();
+    expect(files).toHaveLength(1);
+    expect(files[0].fileName).toBe("image.jpg");
+
+    // Set filter to something that doesn't exist
+    FileService.setFilterType("pdf");
+    files = FileService.getFiles();
+    expect(files).toHaveLength(0);
+
+    // Reset to all
+    FileService.setFilterType("all");
+    files = FileService.getFiles();
+    expect(files).toHaveLength(2);
+  });
+
   test("uploadFile calls API and updates currentFiles", async () => {
     // Mock POST to get upload URL
     (api.post as jest.Mock).mockResolvedValueOnce({
