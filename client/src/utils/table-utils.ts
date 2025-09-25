@@ -33,6 +33,9 @@ export function addFileRow(file: FileItem, tbody: HTMLElement) {
     <button class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2">
       Preview
     </button>
+    <button class="download-btn bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 mr-2">
+      Download
+    </button>
     <button class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
       Delete
     </button>
@@ -68,6 +71,9 @@ export function updateFileRow(file: FileItem, row: HTMLElement) {
     <button class="preview-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2">
       Preview
     </button>
+    <button class="download-btn bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 mr-2">
+      Download
+    </button>
     <button class="delete-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
       Delete
     </button>
@@ -80,13 +86,44 @@ export function updateFileRow(file: FileItem, row: HTMLElement) {
 function wireRowEvents(row: HTMLElement, file: FileItem) {
   const previewBtn = row.querySelector(".preview-btn");
   const deleteBtn = row.querySelector(".delete-btn");
+  const downloadBtn = row.querySelector(".download-btn");
 
   // Remove existing listeners before adding new ones
   previewBtn?.replaceWith(previewBtn.cloneNode(true));
   deleteBtn?.replaceWith(deleteBtn.cloneNode(true));
+  downloadBtn?.replaceWith(downloadBtn.cloneNode(true));
 
   row.querySelector(".preview-btn")?.addEventListener("click", async () => {
     await previewFile(file.fileId, file.ownerId, file.fileName);
+  });
+
+  row.querySelector(".download-btn")?.addEventListener("click", async () => {
+    try {
+      const { downloadUrl } = await fileService.fetchDownloadUrl(
+        file.fileId,
+        file.ownerId
+      );
+
+      // Fetch the file as a blob
+      const response = await fetch(downloadUrl);
+      if (!response.ok) throw new Error("Failed to fetch file");
+
+      const blob = await response.blob();
+
+      // Create temporary download link
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = file.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // Release memory
+      URL.revokeObjectURL(a.href);
+    } catch (err) {
+      console.error("Download failed:", err);
+      alert(`Failed to download ${file.fileName}`);
+    }
   });
 
   row.querySelector(".delete-btn")?.addEventListener("click", async () => {
