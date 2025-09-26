@@ -1,6 +1,6 @@
-import axios from "axios";
 import type { FileItem, ServerFile } from "../types";
 import { computeFileHash } from "../utils/fileUtils";
+import api from "../api/api";
 
 const getUploadedFilesKey = (userId: string) => `uploadedFiles_${userId}`;
 
@@ -8,13 +8,10 @@ class FileService {
   private currentFiles: FileItem[] = [];
   private filterType = "all";
   private baseUrl = import.meta.env.VITE_API_BASE_URL;
-  private store = window.store;
 
   private getUploadedFiles(ownerId: string) {
-    return (this.store.get(getUploadedFilesKey(ownerId)) || {}) as Record<
-      string,
-      string
-    >;
+    const raw = localStorage.getItem(getUploadedFilesKey(ownerId));
+    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
   }
 
   private setUploadedFiles(
@@ -22,12 +19,19 @@ class FileService {
     uploadedFiles: Record<string, string>
   ) {
     console.log("Setting cache as", uploadedFiles);
-    this.store.set(getUploadedFilesKey(ownerId), uploadedFiles);
+    localStorage.setItem(
+      getUploadedFilesKey(ownerId),
+      JSON.stringify(uploadedFiles)
+    );
+  }
+
+  private setLastSync(ownerId: string) {
+    localStorage.setItem(`lastSync_${ownerId}`, Date.now().toString());
   }
 
   async fetchFiles(ownerId: string): Promise<void> {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${this.baseUrl}/files?ownerId=${ownerId}`
       );
       this.currentFiles = response.data.map((file: ServerFile) => ({
@@ -35,7 +39,7 @@ class FileService {
         createdAt: new Date(file.createdAt).toISOString(),
         updatedAt: new Date(file.updatedAt).toISOString(),
       }));
-      this.store.set(`lastSync_${ownerId}`, Date.now());
+      this.setLastSync(ownerId);
     } catch (err) {
       console.error("Fetch files failed", err);
     }
@@ -81,19 +85,14 @@ class FileService {
       hash: fileHash,
     };
 
-    const { data } = await axios.post(
+    const { data } = await api.post(
       `${this.baseUrl}/files/upload-url`,
       fileObj
     );
     const { uploadUrl, fileId } = data;
 
-    await axios.put(uploadUrl, file, {
-      headers: { "Content-Type": file.type },
-    });
-    await axios.post(`${this.baseUrl}/files/mark-uploaded`, {
-      ownerId,
-      fileId,
-    });
+    await api.put(uploadUrl, file, { headers: { "Content-Type": file.type } });
+    await api.post(`${this.baseUrl}/files/mark-uploaded`, { ownerId, fileId });
 
     const uploadedFile = { ...fileObj, fileId };
     this.addFile(uploadedFile);
@@ -103,7 +102,7 @@ class FileService {
   }
 
   async deleteFile(fileId: string, ownerId: string) {
-    await axios.delete(
+    await api.delete(
       `${this.baseUrl}/files/delete/${fileId}?ownerId=${ownerId}`
     );
     this.removeFile(fileId);
@@ -116,7 +115,7 @@ class FileService {
   }
 
   async fetchDownloadUrl(fileId: string, ownerId: string) {
-    const { data } = await axios.get(
+    const { data } = await api.get(
       `${this.baseUrl}/files/download-url/${fileId}?ownerId=${ownerId}`
     );
     return data;

@@ -7,6 +7,8 @@ export interface FileItem {
   hash: string;
   createdAt: string;
   updatedAt: string;
+  createdUser: string;
+  updatedUser: string;
 }
 
 export interface ServerFile {

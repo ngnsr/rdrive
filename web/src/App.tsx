@@ -1,6 +1,7 @@
 import { useAuth } from "./auth/useAuth";
 import Auth from "./pages/Auth";
 import FilesPage from "./pages/FilesPage";
+import "./index.css";
 
 export default function App() {
   const { user, logout } = useAuth();

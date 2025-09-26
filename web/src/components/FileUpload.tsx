@@ -1,5 +1,5 @@
 import { useState } from "react";
-import fileService from "../services/FileService";
+import fileService from "../services/fileService";
 
 export default function FileUpload({ ownerId }: { ownerId: string }) {
   const [file, setFile] = useState<File | null>(null);
