@@ -63,7 +63,7 @@ export default function FileTable({
   const handleDelete = async (file: FileItem) => {
     if (!confirm(`Delete ${file.fileName}?`)) return;
     try {
-      await fileService.deleteFile(file.fileId, ownerId);
+      await fileService.deleteFile(file.fileId, ownerId, file.fileName);
       if (onDelete) onDelete(file.fileId); // notify parent to remove file from state
     } catch (err) {
       console.error(err);

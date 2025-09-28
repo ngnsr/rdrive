@@ -1,7 +1,16 @@
 import { useState } from "react";
 import fileService from "../services/fileService";
+import type { FileItem } from "../types";
 
-export default function FileUpload({ ownerId }: { ownerId: string }) {
+interface FileUploadProps {
+  ownerId: string;
+  onUploadSuccess?: (file: FileItem) => void;
+}
+
+export default function FileUpload({
+  ownerId,
+  onUploadSuccess,
+}: FileUploadProps) {
   const [file, setFile] = useState<File | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -10,7 +19,10 @@ export default function FileUpload({ ownerId }: { ownerId: string }) {
 
   const handleUpload = async () => {
     if (!file) return;
-    await fileService.uploadFile(file, ownerId, file.name);
+    const uploadedFile = await fileService.uploadFile(file, ownerId, file.name);
+    if (uploadedFile && onUploadSuccess) {
+      onUploadSuccess(uploadedFile);
+    }
     setFile(null);
   };
 

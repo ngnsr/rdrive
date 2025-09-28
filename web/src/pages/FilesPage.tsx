@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import FileUpload from "../components/FileUpload";
 import FileTable from "../components/FileTable";
 import fileService from "../services/fileService";
+import type { FileItem } from "../types";
 
 // --- Filter Select Component ---
 function FilterSelect({
@@ -38,8 +39,14 @@ function RefreshButton({ onClick }: { onClick: () => void }) {
 }
 
 // --- Upload Button ---
-function UploadButton({ ownerId }: { ownerId: string }) {
-  return <FileUpload ownerId={ownerId} />;
+function UploadButton({
+  ownerId,
+  onUploadSuccess,
+}: {
+  ownerId: string;
+  onUploadSuccess: (newFile: FileItem) => void;
+}) {
+  return <FileUpload ownerId={ownerId} onUploadSuccess={onUploadSuccess} />;
 }
 
 // --- Column Menu Component ---
@@ -125,7 +132,14 @@ export default function FilesPage({ ownerId }: { ownerId: string }) {
     setFiles([...fileService.getFiles()]);
   };
 
-  // Optional: fetch files on mount
+  const handleUploadSuccess = (newFile: FileItem) => {
+    setFiles((prev) => [...prev, newFile]);
+  };
+
+  const handleDelete = (fileId: string) => {
+    setFiles((prev) => prev.filter((f) => f.fileId !== fileId));
+  };
+
   useEffect(() => {
     refresh();
   }, [ownerId]);
@@ -137,7 +151,10 @@ export default function FilesPage({ ownerId }: { ownerId: string }) {
         <div className="flex items-center gap-2">
           <FilterSelect filter={filter} onChange={handleFilterChange} />
           <RefreshButton onClick={refresh} />
-          <UploadButton ownerId={ownerId} />
+          <UploadButton
+            ownerId={ownerId}
+            onUploadSuccess={handleUploadSuccess}
+          />
           <ColumnMenu />
         </div>
 
@@ -146,7 +163,12 @@ export default function FilesPage({ ownerId }: { ownerId: string }) {
 
       {/* File Table */}
       <section className="bg-white shadow-md rounded-lg p-4">
-        <FileTable ownerId={ownerId} files={files} filter={filter} />
+        <FileTable
+          ownerId={ownerId}
+          files={files}
+          filter={filter}
+          onDelete={handleDelete}
+        />
       </section>
     </div>
   );

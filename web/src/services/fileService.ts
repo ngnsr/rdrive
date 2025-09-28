@@ -73,7 +73,7 @@ class FileService {
     const fileHash = await computeFileHash(file);
     const uploadedFiles = this.getUploadedFiles(ownerId);
 
-    if (uploadedFiles[filePath] === fileHash) return; // already uploaded
+    if (uploadedFiles[filePath] === fileHash) return null; // already uploaded
 
     const now = new Date().toISOString();
     const fileObj = {
@@ -102,17 +102,18 @@ class FileService {
 
     uploadedFiles[filePath] = fileHash;
     this.setUploadedFiles(ownerId, uploadedFiles);
+    return uploadedFile;
   }
 
-  async deleteFile(fileId: string, ownerId: string) {
+  async deleteFile(fileId: string, ownerId: string, fileName: string) {
     await api.delete(
       `${this.baseUrl}/files/delete/${fileId}?ownerId=${ownerId}`
     );
     this.removeFile(fileId);
 
     const uploadedFiles = this.getUploadedFiles(ownerId);
-    for (const key of Object.keys(uploadedFiles)) {
-      if (key.endsWith(fileId)) delete uploadedFiles[key];
+    if (fileName && uploadedFiles[fileName]) {
+      delete uploadedFiles[fileName];
     }
     this.setUploadedFiles(ownerId, uploadedFiles);
   }
