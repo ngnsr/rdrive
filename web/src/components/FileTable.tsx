@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import fileService from "../services/fileService";
 import type { FileItem } from "../types";
 import { FilePreview } from "./PreviewUtils";
@@ -19,9 +19,44 @@ export default function FileTable({
   onDelete,
 }: FileTableProps) {
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
+  const [sortConfig, setSortConfig] = useState({
+    key: "updatedAt",
+    ascending: true,
+  });
 
   const filteredFiles =
     filter === "all" ? files : files.filter((f) => f.fileName.endsWith(filter));
+
+  const handleSort = (key: string) => {
+    setSortConfig((prev) => ({
+      key,
+      ascending: prev.key === key ? !prev.ascending : true,
+    }));
+  };
+
+  const sortedFiles = [...filteredFiles].sort((a, b) => {
+    let valA: any = a[sortConfig.key as keyof FileItem];
+    let valB: any = b[sortConfig.key as keyof FileItem];
+
+    if (sortConfig.key === "size") {
+      valA = Number(valA);
+      valB = Number(valB);
+      return sortConfig.ascending ? valA - valB : valB - valA;
+    } else if (
+      sortConfig.key === "createdAt" ||
+      sortConfig.key === "updatedAt"
+    ) {
+      valA = new Date(valA as string).getTime();
+      valB = new Date(valB as string).getTime();
+      return sortConfig.ascending ? valA - valB : valB - valA;
+    } else {
+      valA = String(valA || "").toLowerCase();
+      valB = String(valB || "").toLowerCase();
+      return sortConfig.ascending
+        ? valA.localeCompare(valB)
+        : valB.localeCompare(valA);
+    }
+  });
 
   const handleDownload = async (file: FileItem) => {
     try {
@@ -49,7 +84,7 @@ export default function FileTable({
     if (!confirm(`Delete ${file.fileName}?`)) return;
     try {
       await fileService.deleteFile(file.fileId, ownerId, file.fileName);
-      if (onDelete) onDelete(file.fileId); // notify parent to remove file from state
+      if (onDelete) onDelete(file.fileId);
     } catch (err) {
       console.error(err);
     }
@@ -64,8 +99,8 @@ export default function FileTable({
     { key: "size", label: "Size", sortable: true },
     { key: "createdAt", label: "Created At", sortable: true },
     { key: "updatedAt", label: "Updated At", sortable: true },
-    { key: "createdBy", label: "Created By" },
-    { key: "updatedBy", label: "Updated By" },
+    { key: "createdBy", label: "Created By", sortable: true },
+    { key: "updatedBy", label: "Updated By", sortable: true },
   ];
 
   return (
@@ -78,14 +113,40 @@ export default function FileTable({
                 visibleCols[col.key] && (
                   <th
                     key={col.key}
-                    className="px-6 py-3 cursor-pointer relative"
-                    onClick={() =>
-                      col.sortable && console.log("Sort not implemented yet")
-                    }
+                    className="px-6 py-3 cursor-pointer relative select-none"
+                    onClick={() => col.sortable && handleSort(col.key)}
                   >
                     {col.label}
                     {col.sortable && (
-                      <span className="sort-arrow absolute right-2"></span>
+                      <span className="absolute right-2">
+                        {sortConfig.key === col.key ? (
+                          sortConfig.ascending ? (
+                            <svg
+                              className="w-4 h-4 inline text-gray-700"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M5 12l5-5 5 5H5z" />
+                            </svg>
+                          ) : (
+                            <svg
+                              className="w-4 h-4 inline text-gray-700"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M5 8l5 5 5-5H5z" />
+                            </svg>
+                          )
+                        ) : (
+                          <svg
+                            className="w-4 h-4 inline text-gray-400 opacity-50"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M7 7l3-3 3 3M7 13l3 3 3-3" />
+                          </svg>
+                        )}
+                      </span>
                     )}
                   </th>
                 )
@@ -93,8 +154,9 @@ export default function FileTable({
             <th className="px-6 py-3">Actions</th>
           </tr>
         </thead>
+
         <tbody className="divide-y divide-gray-200">
-          {filteredFiles.map((file) => (
+          {sortedFiles.map((file) => (
             <tr
               key={file.fileId}
               className="hover:bg-gray-100 transition-colors"
