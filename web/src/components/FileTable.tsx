@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import fileService from "../services/fileService";
 import type { FileItem } from "../types";
-// import { previewFile } from "../utils/previewUtils";
+import { FilePreview } from "./PreviewUtils";
 
 interface FileTableProps {
   ownerId: string;
@@ -33,6 +33,7 @@ export default function FileTable({
       ...saved,
     });
   }, []);
+  const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
 
   const filteredFiles =
     filter === "all" ? files : files.filter((f) => f.fileName.endsWith(filter));
@@ -69,8 +70,8 @@ export default function FileTable({
     }
   };
 
-  const handlePreview = async (file: FileItem) => {
-    await previewFile(file.fileId, ownerId, file.fileName);
+  const handlePreview = (file: FileItem) => {
+    setPreviewFile(file);
   };
 
   const toggleColumn = (col: string) => {
@@ -188,6 +189,13 @@ export default function FileTable({
           ))}
         </tbody>
       </table>
+      {previewFile && (
+        <FilePreview
+          file={previewFile}
+          ownerId={ownerId}
+          onClose={() => setPreviewFile(null)}
+        />
+      )}
     </div>
   );
 }

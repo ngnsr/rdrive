@@ -1,6 +1,7 @@
 import type { FileItem, ServerFile } from "../types";
 import { computeFileHash } from "../utils/fileUtils";
 import api from "../api/api";
+import axios from "axios";
 
 const getUploadedFilesKey = (userId: string) => `uploadedFiles_${userId}`;
 
@@ -91,7 +92,9 @@ class FileService {
     );
     const { uploadUrl, fileId } = data;
 
-    await api.put(uploadUrl, file, { headers: { "Content-Type": file.type } });
+    await axios.put(uploadUrl, file, {
+      headers: { "Content-Type": file.type },
+    });
     await api.post(`${this.baseUrl}/files/mark-uploaded`, { ownerId, fileId });
 
     const uploadedFile = { ...fileObj, fileId };

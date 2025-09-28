@@ -20,6 +20,8 @@ export interface ServerFile {
   hash: string;
   createdAt: string;
   updatedAt: string;
+  createdUser: string;
+  updatedUser: string;
 }
 
 export interface SyncResponse {
