@@ -50,19 +50,13 @@ function UploadButton({
 }
 
 // --- Column Menu Component ---
-function ColumnMenu() {
-  const [open, setOpen] = useState(false);
-  const [columns, setColumns] = useState({
-    size: true,
-    createdAt: true,
-    updatedAt: true,
-    createdBy: true,
-    updatedBy: true,
-  });
+interface ColumnMenuProps {
+  visibleCols: Record<string, boolean>;
+  toggleColumn: (col: string) => void;
+}
 
-  const toggleColumn = (col: keyof typeof columns) => {
-    setColumns((prev) => ({ ...prev, [col]: !prev[col] }));
-  };
+export function ColumnMenu({ visibleCols, toggleColumn }: ColumnMenuProps) {
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="relative inline-block">
@@ -77,18 +71,19 @@ function ColumnMenu() {
       {open && (
         <div className="absolute mt-2 right-0 bg-white rounded shadow-lg border p-3 text-sm z-50 w-56">
           <div className="font-semibold mb-2">Toggle Columns</div>
-          {Object.entries(columns).map(([col, checked]) => (
-            <label key={col} className="block">
-              <input
-                type="checkbox"
-                className="col-toggle"
-                data-col={col}
-                checked={checked}
-                onChange={() => toggleColumn(col as keyof typeof columns)}
-              />
-              <span className="ml-2">{col}</span>
-            </label>
-          ))}
+          {Object.entries(visibleCols)
+            .filter(([col]) => col !== "fileName")
+            .map(([col, checked]) => (
+              <label key={col} className="block cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="col-toggle"
+                  checked={checked}
+                  onChange={() => toggleColumn(col)}
+                />
+                <span className="ml-2">{col}</span>
+              </label>
+            ))}
         </div>
       )}
     </div>
@@ -122,6 +117,29 @@ function AccountPopup() {
 export default function FilesPage({ ownerId }: { ownerId: string }) {
   const [filter, setFilter] = useState("all");
   const [files, setFiles] = useState(fileService.getFiles());
+  const [visibleCols, setVisibleCols] = useState<Record<string, boolean>>({
+    fileName: true,
+    size: true,
+    createdAt: true,
+    updatedAt: true,
+    createdBy: true,
+    updatedBy: true,
+  });
+  const toggleColumn = (col: string) => {
+    setVisibleCols((prev) => {
+      const updated = { ...prev, [col]: !prev[col] };
+      localStorage.setItem("rdrive.visibleCols", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  // Load saved column settings
+  useEffect(() => {
+    const saved = JSON.parse(
+      localStorage.getItem("rdrive.visibleCols") || "{}"
+    );
+    setVisibleCols((prev) => ({ ...prev, ...saved }));
+  }, []);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFilter(e.target.value);
@@ -155,7 +173,7 @@ export default function FilesPage({ ownerId }: { ownerId: string }) {
             ownerId={ownerId}
             onUploadSuccess={handleUploadSuccess}
           />
-          <ColumnMenu />
+          <ColumnMenu visibleCols={visibleCols} toggleColumn={toggleColumn} />
         </div>
 
         <AccountPopup />
@@ -167,6 +185,7 @@ export default function FilesPage({ ownerId }: { ownerId: string }) {
           ownerId={ownerId}
           files={files}
           filter={filter}
+          visibleCols={visibleCols}
           onDelete={handleDelete}
         />
       </section>
